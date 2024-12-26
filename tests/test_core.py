@@ -1,13 +1,12 @@
 # tests/test_core.py
 
 import unittest
-from nseapi.utils import fetch_data_from_nse
+from nseapi.core import get_market_status
 
 class TestNSEAPI(unittest.TestCase):
 
-    def test_fetch_data_from_nse(self):
-        endpoint = "marketStatus"
-        response = fetch_data_from_nse(endpoint)
+    def test_get_market_status(self):
+        response = get_market_status()
         self.assertIn("marketState", response)
 
 if __name__ == '__main__':
