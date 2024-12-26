@@ -1,10 +1,8 @@
 # nseapi/core.py
 
+from .utils import fetch_data_from_nse
+
 def get_market_status():
-    pass
-
-def get_equity_bhavcopy(date):
-    pass
-
-def get_indices_bhavcopy(date):
-    pass
+    """Fetch the current market status from NSE."""
+    endpoint = "marketStatus"
+    return fetch_data_from_nse(endpoint)
