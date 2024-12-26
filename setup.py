@@ -10,7 +10,8 @@ setup(
     author_email='kushgbisen@gmail.com',
     url='https://github.com/kushgbisen/nseapi',
     license='MIT',
-    packages=find_packages(),
+    packages=find_packages(where='src'),
+    package_dir={'': 'src'},
     install_requires=[
         'requests',
     ],
@@ -23,4 +24,5 @@ setup(
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
     ],
+    python_requires='>=3.8',
 )
