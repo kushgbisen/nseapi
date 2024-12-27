@@ -3,6 +3,7 @@ from pathlib import Path
 import requests
 import zipfile
 import os
+from typing import List, Dict
 
 def get_market_status():
     """Fetch the current market status."""
@@ -13,6 +14,21 @@ def get_market_status():
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     return response.json()
+
+def status() -> List[Dict]:
+    """Returns market status of all NSE market segments.
+
+    :return: Market status of all NSE market segments.
+    :rtype: list[dict]
+    """
+    url = "https://www.nseindia.com/api/marketStatus"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    }
+    
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    return response.json()["marketState"]
 
 def download_bhavcopy(date: datetime, download_dir: str = None):
     """Download the equity bhavcopy for a specific date from NSE.

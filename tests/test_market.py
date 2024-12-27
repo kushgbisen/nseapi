@@ -22,7 +22,6 @@ class TestNSEAPI(unittest.TestCase):
         response = get_market_status()
         self.assertIsInstance(response, dict, "Market status response should be a dictionary")
         self.assertIn("marketState", response, "Market status response should contain 'marketState' key")
-        print("✓ Market status test passed")
 
     def test_download_bhavcopy_pre_2024(self):
         """Test bhavcopy download for pre-2024 dates."""
@@ -32,10 +31,9 @@ class TestNSEAPI(unittest.TestCase):
         file_path = os.path.join(self.test_dir, file_name)
         
         self.assertTrue(os.path.exists(file_path), 
-                       f"Bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}")
+                        f"Bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}")
         self.assertGreater(os.path.getsize(file_path), 0, 
-                          "Downloaded bhavcopy file is empty")
-        print(f"✓ Bhavcopy download test for {date.strftime('%Y-%m-%d')} passed")
+                           "Downloaded bhavcopy file is empty")
 
     def test_download_bhavcopy_2024(self):
         """Test bhavcopy download for 2024 dates."""
@@ -45,16 +43,16 @@ class TestNSEAPI(unittest.TestCase):
         file_path = os.path.join(self.test_dir, file_name)
         
         self.assertTrue(os.path.exists(file_path), 
-                       f"Bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}")
+                        f"Bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}")
         self.assertGreater(os.path.getsize(file_path), 0, 
-                          "Downloaded bhavcopy file is empty")
-        print(f"✓ Bhavcopy download test for {date.strftime('%Y-%m-%d')} passed")
+                           "Downloaded bhavcopy file is empty")
 
     def test_download_bhavcopy_invalid_date(self):
         """Test bhavcopy download with invalid date."""
         future_date = datetime(2025, 1, 1)
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception) as context:
             download_bhavcopy(future_date, download_dir=self.test_dir)
+        self.assertIn("Failed to download bhavcopy", str(context.exception))
 
 if __name__ == '__main__':
     unittest.main()
