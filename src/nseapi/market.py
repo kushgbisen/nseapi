@@ -139,3 +139,46 @@ def delivery_bhavcopy(date: datetime, download_dir: str = None) -> Path:
         raise Exception(f"Failed to download delivery bhavcopy: {e}")
     except OSError as e:
         raise Exception(f"File operation failed: {e}")
+
+def bhavcopy_index(date: datetime, download_dir: str = None) -> Path:
+    """Download the daily Equity bhavcopy for Index data for a specified date.
+    
+    Args:
+        date (datetime): Date of bhavcopy to download
+        download_dir (str, optional): Directory to save the downloaded file. 
+                                      Defaults to current working directory.
+    
+    Returns:
+        Path: Path to the downloaded CSV file
+        
+    Raises:
+        requests.exceptions.RequestException: If download fails
+        OSError: If there are file operation issues
+    """
+    # Set download directory
+    target_directory = Path(download_dir) if download_dir else Path.cwd()
+    target_directory.mkdir(parents=True, exist_ok=True)
+
+    # URL for the index bhavcopy
+    url = f"https://www1.nseindia.com/content/indices/ind_close_all_{date.strftime('%d%m%Y')}.csv"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        
+        # Save the CSV file
+        csv_path = target_directory / f"bhavcopy_index_{date.strftime('%Y%m%d')}.csv"
+        with open(csv_path, 'wb') as file:
+            file.write(response.content)
+        
+        print(f"Downloaded bhavcopy index for {date.strftime('%Y-%m-%d')} at {csv_path}")
+        return csv_path
+        
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to download bhavcopy index: {e}")
+    except OSError as e:
+        raise Exception(f"File operation failed: {e}")
