@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 import os
-from nseapi.market import get_market_status, download_bhavcopy
+from nseapi.market import get_market_status, download_bhavcopy, delivery_bhavcopy
 
 class TestNSEAPI(unittest.TestCase):
     def setUp(self):
@@ -53,6 +53,18 @@ class TestNSEAPI(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             download_bhavcopy(future_date, download_dir=self.test_dir)
         self.assertIn("Failed to download bhavcopy", str(context.exception))
+
+    def test_download_delivery_bhavcopy(self):
+        """Test delivery bhavcopy download."""
+        date = datetime(2023, 12, 26)
+        delivery_bhavcopy(date, download_dir=self.test_dir)
+        file_name = f"delivery_bhavcopy_{date.strftime('%Y%m%d')}.csv"
+        file_path = os.path.join(self.test_dir, file_name)
+        
+        self.assertTrue(os.path.exists(file_path), 
+                        f"Delivery bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}")
+        self.assertGreater(os.path.getsize(file_path), 0, 
+                           "Downloaded delivery bhavcopy file is empty")
 
 if __name__ == '__main__':
     unittest.main()
