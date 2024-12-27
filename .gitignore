@@ -18,4 +18,8 @@ venv/
 
 # Ignore the downloads directory used for testing
 downloads/
-test_downloads_*/  # Include patterns for test directories
+test_downloads_*/
+
+# Logs
+*.log
+nseapi.log

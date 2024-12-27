@@ -9,6 +9,7 @@ NSEAPI is a Python package designed for seamless interaction with the National S
   - [Fetching Market Status](#fetching-market-status)
   - [Downloading Bhavcopy](#downloading-bhavcopy)
   - [Helper Functions](#helper-functions)
+  - [Logging](#logging)
 - [Project Structure](#project-structure)
 - [License](#license)
 
@@ -66,6 +67,19 @@ data = fetch_data_from_nse(endpoint)
 print("Data from NSE:", data)
 ```
 
+### Logging
+
+The package includes built-in logging functionality that tracks API interactions:
+- Debug level: Records API request attempts
+- Info level: Logs successful responses
+- Error level: Captures failed requests with details
+
+Logs are written to `nseapi.log` in the current working directory. Example log output:
+```
+2024-12-27 06:53:03 - INFO - Successfully fetched data from marketStatus
+2024-12-27 06:53:04 - ERROR - Failed to fetch data from invalid_endpoint: 404 Client Error
+```
+
 ## Project Structure
 
 The project is organized as follows:
@@ -75,7 +89,7 @@ nseapi/
 ├── src/
 │   ├── __init__.py
 │   ├── market.py        # Functions to fetch market status and download bhavcopy
-│   └── helpers.py       # Helper functions for internal use
+│   └── helpers.py       # Helper functions with logging support
 ├── tests/
 │   ├── __init__.py
 │   └── test_market.py   # Unit tests for market functions
