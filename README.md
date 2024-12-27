@@ -47,7 +47,7 @@ import os
 date = datetime(2023, 12, 26)
 
 # Download the bhavcopy
-download_bhavcopy(date, download_folder='downloads')
+download_bhavcopy(date, download_dir='downloads')
 
 # Verify the file download
 file_name = f"BhavCopy_NSE_CM_0_0_0_{date.strftime('%Y%m%d')}_F_0000.csv"
@@ -79,7 +79,6 @@ Logs are written to `nseapi.log` in the current working directory. Example log o
 2024-12-27 06:53:03 - INFO - Successfully fetched data from marketStatus
 2024-12-27 06:53:04 - ERROR - Failed to fetch data from invalid_endpoint: 404 Client Error
 ```
-
 ## Project Structure
 
 The project is organized as follows:
@@ -87,17 +86,19 @@ The project is organized as follows:
 ```
 nseapi/
 ├── src/
-│   ├── __init__.py
-│   ├── market.py        # Functions to fetch market status and download bhavcopy
-│   └── helpers.py       # Helper functions with logging support
+│   ├── nseapi/
+│   │   ├── __init__.py
+│   │   ├── market.py        # Functions to fetch market status and download bhavcopy
+│   │   └── helpers.py       # Helper functions with logging support
 ├── tests/
 │   ├── __init__.py
-│   └── test_market.py   # Unit tests for market functions
-├── setup.py             # Package setup configuration
-├── requirements.txt     # Project dependencies
-└── README.md           # Project documentation
+│   ├── test_market.py       # Unit tests for market functions
+│   └── test_helpers.py      # Unit tests for logging setup
+├── setup.py                 # Package setup configuration
+├── requirements.txt         # Project dependencies
+├── README.md                # Project documentation
+└── LICENSE                  # MIT License file
 ```
-
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
