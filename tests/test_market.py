@@ -8,6 +8,8 @@ from nseapi.market import (
     bhavcopy_index,
     get_corporate_actions,
     get_announcements,
+    get_stock_quote,
+    get_option_chain,
 )
 
 class TestNSEAPI(unittest.TestCase):
@@ -112,6 +114,40 @@ class TestNSEAPI(unittest.TestCase):
         to_date = datetime(2023, 12, 31)
         announcements = get_announcements(index="equities", symbol="HDFCBANK", from_date=from_date, to_date=to_date)
         self.assertIsInstance(announcements, list, "Announcements response should be a list")
+
+    def test_get_stock_quote(self):
+        """Test fetching stock quote for a valid symbol."""
+        symbol = "INFY"
+        quote = get_stock_quote(symbol)
+        self.assertIsInstance(quote, dict, "Stock quote response should be a dictionary")
+        self.assertIn("symbol", quote, "Stock quote should contain 'symbol' key")
+        self.assertEqual(quote["symbol"], symbol, "Symbol in response should match the requested symbol")
+
+    def test_get_stock_quote_invalid_symbol(self):
+        """Test fetching stock quote for an invalid symbol."""
+        with self.assertRaises(ValueError) as context:
+            get_stock_quote("INVALID_SYMBOL")
+        self.assertIn("Invalid symbol", str(context.exception))
+
+    def test_get_option_chain_index(self):
+        """Test fetching option chain for an index."""
+        symbol = "NIFTY"
+        option_chain = get_option_chain(symbol, is_index=True)
+        self.assertIsInstance(option_chain, dict, "Option chain response should be a dictionary")
+        self.assertIn("records", option_chain, "Option chain should contain 'records' key")
+
+    def test_get_option_chain_stock(self):
+        """Test fetching option chain for a stock."""
+        symbol = "RELIANCE"
+        option_chain = get_option_chain(symbol)
+        self.assertIsInstance(option_chain, dict, "Option chain response should be a dictionary")
+        self.assertIn("records", option_chain, "Option chain should contain 'records' key")
+
+    def test_get_option_chain_invalid_symbol(self):
+        """Test fetching option chain for an invalid symbol."""
+        with self.assertRaises(ValueError) as context:
+            get_option_chain("INVALID_SYMBOL")
+        self.assertIn("Invalid symbol", str(context.exception))
 
 if __name__ == '__main__':
     unittest.main()

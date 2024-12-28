@@ -31,6 +31,92 @@ def status() -> List[Dict]:
     response.raise_for_status()
     return response.json()["marketState"]
 
+def get_stock_quote(symbol: str) -> dict:
+    """Fetch the stock quote for a specific symbol.
+
+    Args:
+        symbol (str): The stock symbol (e.g., "INFY", "RELIANCE").
+
+    Returns:
+        dict: A dictionary containing the stock quote data.
+
+    Raises:
+        ValueError: If the symbol is invalid or not found.
+        requests.exceptions.RequestException: If the API request fails.
+    """
+    url = f"https://www.nseindia.com/api/quote-equity?symbol={symbol}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+    try:
+        response = session.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+
+        # Check if the response contains the expected data
+        if not data.get("info", {}).get("symbol"):
+            raise ValueError(f"Invalid symbol: {symbol}")
+
+        # Extract relevant data
+        quote_data = {
+            "symbol": data["info"]["symbol"],
+            "company_name": data["info"]["companyName"],
+            "current_price": data["priceInfo"]["lastPrice"],
+            "open": data["priceInfo"]["open"],
+            "high": data["priceInfo"]["intraDayHighLow"]["max"],
+            "low": data["priceInfo"]["intraDayHighLow"]["min"],
+            "close": data["priceInfo"]["close"],
+            "volume": data["preOpenMarket"]["totalTradedVolume"],
+            "52_week_high": data["priceInfo"]["weekHighLow"]["max"],
+            "52_week_low": data["priceInfo"]["weekHighLow"]["min"],
+        }
+        return quote_data
+    except requests.exceptions.HTTPError as e:
+        if response.status_code == 404:
+            raise ValueError(f"Invalid symbol: {symbol}")
+        raise Exception(f"Failed to fetch stock quote: {e}")
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"API request failed: {e}")
+
+def get_option_chain(symbol: str, is_index: bool = False) -> dict:
+    """Fetch the option chain for a specific stock or index.
+
+    Args:
+        symbol (str): The stock or index symbol (e.g., "NIFTY", "BANKNIFTY", "RELIANCE").
+        is_index (bool): Whether the symbol is an index. Defaults to False.
+
+    Returns:
+        dict: A dictionary containing the option chain data.
+
+    Raises:
+        ValueError: If the symbol is invalid or not found.
+        requests.exceptions.RequestException: If the API request fails.
+    """
+    endpoint = "option-chain-indices" if is_index else "option-chain-equities"
+    url = f"https://www.nseindia.com/api/{endpoint}?symbol={symbol}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+    try:
+        response = session.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        
+        if not data.get("records"):
+            raise ValueError(f"Invalid symbol: {symbol}")
+        
+        return data
+    except requests.exceptions.HTTPError as e:
+        if response.status_code == 404:
+            raise ValueError(f"Invalid symbol: {symbol}")
+        raise Exception(f"Failed to fetch option chain: {e}")
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"API request failed: {e}")
+
 def download_bhavcopy(date: datetime, download_dir: str = None) -> Path:
     """Download the equity bhavcopy for a specific date from NSE.
     
