@@ -31,6 +31,40 @@ def status() -> List[Dict]:
     response.raise_for_status()
     return response.json()["marketState"]
 
+def get_all_indices() -> List[Dict]:
+    """Fetch data for all NSE indices.
+
+    Returns:
+        List[Dict]: A list of dictionaries containing index data.
+
+    Raises:
+        requests.exceptions.RequestException: If the API request fails.
+    """
+    url = "https://www.nseindia.com/api/allIndices"
+    try:
+        response = session.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        # Extract relevant data for each index
+        indices = []
+        for index in data.get("data", []):
+            index_data = {
+                "name": index.get("indexName"),
+                "last_price": index.get("last"),
+                "change": index.get("change"),
+                "percent_change": index.get("pChange"),
+                "high": index.get("high"),
+                "low": index.get("low"),
+                "open": index.get("open"),
+                "previous_close": index.get("previousClose"),
+            }
+            indices.append(index_data)
+
+        return indices
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to fetch all indices: {e}")
+
 def get_stock_quote(symbol: str) -> dict:
     """Fetch the stock quote for a specific symbol.
 

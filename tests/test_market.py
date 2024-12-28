@@ -1,6 +1,8 @@
 import unittest
 from datetime import datetime
 import os
+import requests
+from unittest import mock
 from nseapi.market import (
     get_market_status,
     download_bhavcopy,
@@ -10,6 +12,7 @@ from nseapi.market import (
     get_announcements,
     get_stock_quote,
     get_option_chain,
+    get_all_indices,
 )
 
 class TestNSEAPI(unittest.TestCase):
@@ -148,6 +151,21 @@ class TestNSEAPI(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             get_option_chain("INVALID_SYMBOL")
         self.assertIn("Invalid symbol", str(context.exception))
+
+    def test_get_all_indices(self):
+        """Test fetching data for all NSE indices."""
+        indices = get_all_indices()
+        self.assertIsInstance(indices, list, "Indices response should be a list")
+        if indices:  # Check structure if data is returned
+            self.assertIn("name", indices[0], "Index data should contain 'name' key")
+            self.assertIn("last_price", indices[0], "Index data should contain 'last_price' key")
+
+    def test_get_all_indices_api_error(self):
+        """Test handling of API errors when fetching all indices."""
+        with mock.patch("requests.Session.get", side_effect=requests.exceptions.RequestException("API error")):
+            with self.assertRaises(Exception) as context:
+                get_all_indices()
+            self.assertIn("Failed to fetch all indices", str(context.exception))
 
 if __name__ == '__main__':
     unittest.main()

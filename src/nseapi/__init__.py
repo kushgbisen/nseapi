@@ -6,6 +6,8 @@ from nseapi.market import (
     get_corporate_actions,
     get_announcements,
     get_stock_quote,
+    get_option_chain,
+    get_all_indices,
 )
 
 __version__ = "0.1.0"
@@ -17,4 +19,6 @@ __all__ = [
     "get_corporate_actions",
     "get_announcements",
     "get_stock_quote",
+    "get_option_chain",
+    "get_all_indices",
 ]
