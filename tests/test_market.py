@@ -1,7 +1,14 @@
 import unittest
 from datetime import datetime
 import os
-from nseapi.market import get_market_status, download_bhavcopy, delivery_bhavcopy, bhavcopy_index
+from nseapi.market import (
+    get_market_status,
+    download_bhavcopy,
+    delivery_bhavcopy,
+    bhavcopy_index,
+    get_corporate_actions,
+    get_announcements,
+)
 
 class TestNSEAPI(unittest.TestCase):
     def setUp(self):
@@ -77,6 +84,34 @@ class TestNSEAPI(unittest.TestCase):
                         f"Bhavcopy index file for {date.strftime('%Y-%m-%d')} not found at {file_path}")
         self.assertGreater(os.path.getsize(file_path), 0, 
                            "Downloaded bhavcopy index file is empty")
+
+    def test_get_corporate_actions(self):
+        """Test fetching corporate actions."""
+        actions = get_corporate_actions(segment="equities")
+        self.assertIsInstance(actions, list, "Corporate actions response should be a list")
+        if actions:  # Check structure if data is returned
+            self.assertIn("symbol", actions[0], "Corporate action should contain 'symbol' key")
+
+    def test_get_corporate_actions_with_filter(self):
+        """Test fetching corporate actions with symbol and date range."""
+        from_date = datetime(2023, 1, 1)
+        to_date = datetime(2023, 12, 31)
+        actions = get_corporate_actions(segment="equities", symbol="HDFCBANK", from_date=from_date, to_date=to_date)
+        self.assertIsInstance(actions, list, "Corporate actions response should be a list")
+
+    def test_get_announcements(self):
+        """Test fetching corporate announcements."""
+        announcements = get_announcements(index="equities")
+        self.assertIsInstance(announcements, list, "Announcements response should be a list")
+        if announcements:  # Check structure if data is returned
+            self.assertIn("symbol", announcements[0], "Announcement should contain 'symbol' key")
+
+    def test_get_announcements_with_filter(self):
+        """Test fetching corporate announcements with symbol and date range."""
+        from_date = datetime(2023, 1, 1)
+        to_date = datetime(2023, 12, 31)
+        announcements = get_announcements(index="equities", symbol="HDFCBANK", from_date=from_date, to_date=to_date)
+        self.assertIsInstance(announcements, list, "Announcements response should be a list")
 
 if __name__ == '__main__':
     unittest.main()

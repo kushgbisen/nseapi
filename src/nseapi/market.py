@@ -3,15 +3,20 @@ from pathlib import Path
 import requests
 import zipfile
 import os
-from typing import List, Dict
+from typing import List, Dict, Literal, Optional
+
+# Initialize a session for all requests
+session = requests.Session()
+session.headers.update({
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Accept": "*/*",
+    "Accept-Language": "en-US,en;q=0.9",
+})
 
 def get_market_status():
     """Fetch the current market status."""
     url = "https://www.nseindia.com/api/marketStatus"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    }
-    response = requests.get(url, headers=headers)
+    response = session.get(url)
     response.raise_for_status()
     return response.json()
 
@@ -22,11 +27,7 @@ def status() -> List[Dict]:
     :rtype: list[dict]
     """
     url = "https://www.nseindia.com/api/marketStatus"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    }
-    
-    response = requests.get(url, headers=headers)
+    response = session.get(url)
     response.raise_for_status()
     return response.json()["marketState"]
 
@@ -56,12 +57,8 @@ def download_bhavcopy(date: datetime, download_dir: str = None) -> Path:
     else:
         url = f"https://nsearchives.nseindia.com/content/historical/EQUITIES/{date.strftime('%Y')}/{date.strftime('%b').upper()}/cm{date.strftime('%d%b%Y').upper()}bhav.csv.zip"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    }
-
     try:
-        response = requests.get(url, headers=headers)
+        response = session.get(url)
         response.raise_for_status()
         
         # Save and extract zip file
@@ -119,12 +116,8 @@ def delivery_bhavcopy(date: datetime, download_dir: str = None) -> Path:
     # URL for the delivery bhavcopy
     url = f"https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_{date.strftime('%d%m%Y')}.csv"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    }
-
     try:
-        response = requests.get(url, headers=headers)
+        response = session.get(url)
         response.raise_for_status()
         
         # Save the CSV file
@@ -162,12 +155,8 @@ def bhavcopy_index(date: datetime, download_dir: str = None) -> Path:
     # URL for the index bhavcopy
     url = f"https://www1.nseindia.com/content/indices/ind_close_all_{date.strftime('%d%m%Y')}.csv"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    }
-
     try:
-        response = requests.get(url, headers=headers)
+        response = session.get(url)
         response.raise_for_status()
         
         # Save the CSV file
@@ -182,3 +171,79 @@ def bhavcopy_index(date: datetime, download_dir: str = None) -> Path:
         raise Exception(f"Failed to download bhavcopy index: {e}")
     except OSError as e:
         raise Exception(f"File operation failed: {e}")
+
+def get_corporate_actions(
+    segment: Literal["equities", "sme", "debt", "mf"] = "equities",
+    symbol: Optional[str] = None,
+    from_date: Optional[datetime] = None,
+    to_date: Optional[datetime] = None,
+) -> List[Dict]:
+    """Fetch forthcoming corporate actions.
+
+    Args:
+        segment (str): Market segment (equities, sme, debt, mf). Defaults to "equities".
+        symbol (str, optional): Stock symbol to filter results.
+        from_date (datetime, optional): Start date for filtering.
+        to_date (datetime, optional): End date for filtering.
+    
+    Returns:
+        list[dict]: List of corporate actions.
+    
+    Raises:
+        ValueError: If `from_date` is greater than `to_date`.
+    """
+    url = "https://www.nseindia.com/api/corporates-corporateActions"
+    params = {"index": segment}
+    if symbol:
+        params["symbol"] = symbol
+    if from_date and to_date:
+        if from_date > to_date:
+            raise ValueError("'from_date' cannot be greater than 'to_date'")
+        params.update({
+            "from_date": from_date.strftime("%d-%m-%Y"),
+            "to_date": to_date.strftime("%d-%m-%Y"),
+        })
+
+    response = session.get(url, params=params)
+    response.raise_for_status()
+    return response.json()
+
+def get_announcements(
+    index: Literal["equities", "sme", "debt", "mf", "invitsreits"] = "equities",
+    symbol: Optional[str] = None,
+    fno: bool = False,
+    from_date: Optional[datetime] = None,
+    to_date: Optional[datetime] = None,
+) -> List[Dict]:
+    """Fetch corporate announcements.
+
+    Args:
+        index (str): Market segment (equities, sme, debt, mf, invitsreits). Defaults to "equities".
+        symbol (str, optional): Stock symbol to filter results.
+        fno (bool, optional): Whether to include only FnO stocks. Defaults to False.
+        from_date (datetime, optional): Start date for filtering.
+        to_date (datetime, optional): End date for filtering.
+    
+    Returns:
+        list[dict]: List of corporate announcements.
+    
+    Raises:
+        ValueError: If `from_date` is greater than `to_date`.
+    """
+    url = "https://www.nseindia.com/api/corporate-announcements"
+    params = {"index": index}
+    if symbol:
+        params["symbol"] = symbol
+    if fno:
+        params["fo_sec"] = True
+    if from_date and to_date:
+        if from_date > to_date:
+            raise ValueError("'from_date' cannot be greater than 'to_date'")
+        params.update({
+            "from_date": from_date.strftime("%d-%m-%Y"),
+            "to_date": to_date.strftime("%d-%m-%Y"),
+        })
+
+    response = session.get(url, params=params)
+    response.raise_for_status()
+    return response.json()
