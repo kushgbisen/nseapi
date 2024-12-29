@@ -41,7 +41,7 @@ pip install .
 The `get_market_status` function retrieves the current market status, including whether the market is open or closed.
 
 ```python
-from nseapi.market import get_market_status
+from nseapi import get_market_status
 
 market_status = get_market_status()
 print("Market Status:", market_status)
@@ -52,20 +52,11 @@ print("Market Status:", market_status)
 The `download_bhavcopy` function downloads the equity bhavcopy (a daily report of stock prices) for a specific date. The file is saved in the specified directory.
 
 ```python
-from nseapi.market import download_bhavcopy
+from nseapi import download_bhavcopy
 from datetime import datetime
-import os
 
-# Set the date for the bhavcopy
 date = datetime(2023, 12, 26)
-
-# Download the bhavcopy
 download_bhavcopy(date, download_dir='downloads')
-
-# Verify the file download
-file_name = f"BhavCopy_NSE_CM_0_0_0_{date.strftime('%Y%m%d')}_F_0000.csv"
-file_path = os.path.join('downloads', file_name)
-print(f"Bhavcopy file downloaded at: {file_path}")
 ```
 
 ### Fetching Stock Quotes
@@ -73,7 +64,7 @@ print(f"Bhavcopy file downloaded at: {file_path}")
 The `get_stock_quote` function fetches the stock quote for a specific symbol, including the current price, open, high, low, close, and volume.
 
 ```python
-from nseapi.market import get_stock_quote
+from nseapi import get_stock_quote
 
 symbol = "INFY"
 quote = get_stock_quote(symbol)
@@ -85,7 +76,7 @@ print("Stock Quote:", quote)
 The `get_option_chain` function retrieves the option chain data for a specific stock or index. This includes details about call and put options, strike prices, and open interest.
 
 ```python
-from nseapi.market import get_option_chain
+from nseapi import get_option_chain
 
 # For a stock
 symbol = "RELIANCE"
@@ -103,7 +94,7 @@ print("Option Chain for NIFTY:", option_chain)
 The `get_corporate_actions` function fetches forthcoming corporate actions (e.g., dividends, stock splits) for a specific segment or symbol.
 
 ```python
-from nseapi.market import get_corporate_actions
+from nseapi import get_corporate_actions
 from datetime import datetime
 
 # Fetch corporate actions for equities
@@ -122,7 +113,7 @@ print("Filtered Corporate Actions:", actions)
 The `get_announcements` function fetches corporate announcements for a specific segment or symbol.
 
 ```python
-from nseapi.market import get_announcements
+from nseapi import get_announcements
 from datetime import datetime
 
 # Fetch corporate announcements for equities
@@ -141,7 +132,7 @@ print("Filtered Corporate Announcements:", announcements)
 The `get_all_indices` function fetches data for all NSE indices, including the last price, change, and percentage change.
 
 ```python
-from nseapi.market import get_all_indices
+from nseapi import get_all_indices
 
 indices = get_all_indices()
 print("All Indices:", indices)
@@ -181,24 +172,19 @@ The project is organized as follows:
 ./
 ├── .gitignore                # Specifies files and directories to ignore in Git
 ├── .pre-commit-config.yaml   # Configuration for pre-commit hooks
-├── install-hooks.sh*         # Script to install pre-commit hooks (executable)
 ├── LICENSE                   # License file for the project (MIT License)
 ├── README.md                 # Project documentation
 ├── requirements.txt          # Lists project dependencies (currently only `requests`)
 ├── setup.py                  # Package setup configuration
-├── scripts/                  # Directory for scripts
-│   └── hooks/                # Directory for Git hooks
-│       └── pre-commit*       # Pre-commit hook script (executable)
 ├── src/                      # Source code directory
 │   └── nseapi/               # Main package directory
 │       ├── __init__.py       # Package initialization file
 │       ├── helpers.py        # Helper functions (e.g., API requests, logging)
-│       └── market.py         # Core functionality (e.g., market status, bhavcopy)
 └── tests/                    # Unit tests directory
-    ├── __init__.py           # Initialization file for tests
     ├── test_helpers.py       # Tests for helper functions
     └── test_market.py        # Tests for market-related functions
 ```
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.

@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 import requests
 from unittest import mock
-from nseapi.market import (
+from nseapi import (
     get_market_status,
     download_bhavcopy,
     delivery_bhavcopy,

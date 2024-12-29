@@ -1,14 +1,13 @@
 import pytest
 from pathlib import Path
 import logging
-
-# Adjust the import statement
-from nseapi.helpers import logger
+from unittest.mock import patch
+import requests
+from nseapi.helpers import fetch_data_from_nse, logger
 
 
 def test_logging_setup():
-    """Test if logger is properly configured"""
-
+    """Test if logger is properly configured."""
     # Test log file creation
     logger.info("Test message")
     log_file = Path("nseapi.log")
@@ -21,3 +20,34 @@ def test_logging_setup():
 
     # Cleanup
     log_file.unlink()
+
+
+def test_fetch_data_from_nse_success():
+    """Test successful API request."""
+    with patch("requests.get") as mock_get:
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {"key": "value"}
+
+        data = fetch_data_from_nse("test-endpoint")
+        assert data == {"key": "value"}
+
+
+def test_fetch_data_from_nse_retry():
+    """Test retry logic on failed API request."""
+    with patch(
+        "requests.get", side_effect=requests.exceptions.RequestException("Failed")
+    ) as mock_get:
+        with pytest.raises(requests.exceptions.RequestException) as exc_info:
+            fetch_data_from_nse("test-endpoint", retries=3, delay=1)
+        assert str(exc_info.value) == "Failed"
+        assert mock_get.call_count == 3
+
+
+def test_fetch_data_from_nse_timeout():
+    """Test timeout handling."""
+    with patch(
+        "requests.get", side_effect=requests.exceptions.Timeout("Timeout")
+    ) as mock_get:
+        with pytest.raises(requests.exceptions.Timeout) as exc_info:
+            fetch_data_from_nse("test-endpoint", timeout=5)
+        assert str(exc_info.value) == "Timeout"
