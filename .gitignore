@@ -21,5 +21,6 @@ downloads/
 test_downloads_*/
 
 # Logs
+logs/
 *.log
 nseapi.log

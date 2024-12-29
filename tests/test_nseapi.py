@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import requests
 from unittest import mock
@@ -75,9 +75,20 @@ class TestNSEAPI(unittest.TestCase):
     def test_download_bhavcopy_invalid_date(self):
         """Test bhavcopy download with invalid date."""
         future_date = datetime(2025, 1, 1)
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValueError) as context:
             download_bhavcopy(future_date, download_dir=self.test_dir)
-        self.assertIn("Failed to download bhavcopy", str(context.exception))
+        self.assertIn(
+            "Cannot download bhavcopy for a future date", str(context.exception)
+        )
+
+    def test_download_bhavcopy_future_date(self):
+        """Test bhavcopy download with a future date."""
+        future_date = datetime.now() + timedelta(days=1)
+        with self.assertRaises(ValueError) as context:
+            download_bhavcopy(future_date, download_dir=self.test_dir)
+        self.assertIn(
+            "Cannot download bhavcopy for a future date", str(context.exception)
+        )
 
     def test_download_delivery_bhavcopy(self):
         """Test delivery bhavcopy download."""

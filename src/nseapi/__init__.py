@@ -13,8 +13,16 @@ session.headers.update(
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         "Accept": "*/*",
         "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://www.nseindia.com/",
+        "Origin": "https://www.nseindia.com",
     }
 )
+
+
+# Fetch cookies required for API access
+def _fetch_cookies():
+    session.get("https://www.nseindia.com/")
+    return session.cookies
 
 
 def get_market_status() -> Dict:
@@ -24,9 +32,12 @@ def get_market_status() -> Dict:
         Dict: A dictionary containing the market status.
     """
     url = "https://www.nseindia.com/api/marketStatus"
-    response = session.get(url)
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = session.get(url, cookies=_fetch_cookies())
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to fetch market status: {e}")
 
 
 def download_bhavcopy(date: datetime, download_dir: str = None) -> Path:
@@ -38,7 +49,13 @@ def download_bhavcopy(date: datetime, download_dir: str = None) -> Path:
 
     Returns:
         Path: Path to the downloaded CSV file.
+
+    Raises:
+        ValueError: If the date is in the future.
     """
+    if date > datetime.now():
+        raise ValueError("Cannot download bhavcopy for a future date.")
+
     target_directory = Path(download_dir) if download_dir else Path.cwd()
     target_directory.mkdir(parents=True, exist_ok=True)
 
@@ -48,7 +65,7 @@ def download_bhavcopy(date: datetime, download_dir: str = None) -> Path:
         url = f"https://nsearchives.nseindia.com/content/historical/EQUITIES/{date.strftime('%Y')}/{date.strftime('%b').upper()}/cm{date.strftime('%d%b%Y').upper()}bhav.csv.zip"
 
     try:
-        response = session.get(url)
+        response = session.get(url, cookies=_fetch_cookies())
         response.raise_for_status()
 
         zip_path = target_directory / f"bhav_copy_{date.strftime('%Y%m%d')}.zip"
@@ -94,7 +111,7 @@ def delivery_bhavcopy(date: datetime, download_dir: str = None) -> Path:
     url = f"https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_{date.strftime('%d%m%Y')}.csv"
 
     try:
-        response = session.get(url)
+        response = session.get(url, cookies=_fetch_cookies())
         response.raise_for_status()
 
         csv_path = target_directory / f"delivery_bhavcopy_{date.strftime('%Y%m%d')}.csv"
@@ -125,7 +142,7 @@ def bhavcopy_index(date: datetime, download_dir: str = None) -> Path:
     url = f"https://www1.nseindia.com/content/indices/ind_close_all_{date.strftime('%d%m%Y')}.csv"
 
     try:
-        response = session.get(url)
+        response = session.get(url, cookies=_fetch_cookies())
         response.raise_for_status()
 
         csv_path = target_directory / f"bhavcopy_index_{date.strftime('%Y%m%d')}.csv"
@@ -154,13 +171,8 @@ def get_stock_quote(symbol: str) -> Dict:
         requests.exceptions.RequestException: If the API request fails.
     """
     url = f"https://www.nseindia.com/api/quote-equity?symbol={symbol}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "*/*",
-        "Accept-Language": "en-US,en;q=0.9",
-    }
     try:
-        response = session.get(url, headers=headers)
+        response = session.get(url, cookies=_fetch_cookies())
         response.raise_for_status()
         data = response.json()
 
@@ -205,13 +217,8 @@ def get_option_chain(symbol: str, is_index: bool = False) -> Dict:
     """
     endpoint = "option-chain-indices" if is_index else "option-chain-equities"
     url = f"https://www.nseindia.com/api/{endpoint}?symbol={symbol}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "*/*",
-        "Accept-Language": "en-US,en;q=0.9",
-    }
     try:
-        response = session.get(url, headers=headers)
+        response = session.get(url, cookies=_fetch_cookies())
         response.raise_for_status()
         data = response.json()
 
@@ -238,7 +245,7 @@ def get_all_indices() -> List[Dict]:
     """
     url = "https://www.nseindia.com/api/allIndices"
     try:
-        response = session.get(url)
+        response = session.get(url, cookies=_fetch_cookies())
         response.raise_for_status()
         data = response.json()
 
@@ -295,9 +302,12 @@ def get_corporate_actions(
             }
         )
 
-    response = session.get(url, params=params)
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = session.get(url, params=params, cookies=_fetch_cookies())
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to fetch corporate actions: {e}")
 
 
 def get_announcements(
@@ -338,9 +348,12 @@ def get_announcements(
             }
         )
 
-    response = session.get(url, params=params)
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = session.get(url, params=params, cookies=_fetch_cookies())
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to fetch corporate announcements: {e}")
 
 
 __version__ = "0.1.0"

@@ -2,14 +2,19 @@ import logging
 import requests
 from time import sleep
 from functools import lru_cache
+from pathlib import Path
 
 # Configure logger
 logger = logging.getLogger("NSEIndia")
 logger.setLevel(logging.INFO)
 
+# Create logs directory if it doesn't exist
+logs_dir = Path("logs")
+logs_dir.mkdir(exist_ok=True)
+
 # Create handlers if not already present
 if not logger.handlers:
-    handler = logging.FileHandler("nseapi.log")
+    handler = logging.FileHandler(logs_dir / "nseapi.log")
     handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
     logger.addHandler(handler)
 
@@ -29,6 +34,11 @@ def fetch_data_from_nse(endpoint, retries=3, delay=2, timeout=10):
     Raises:
         requests.RequestException: If the request fails after all retries.
     """
+    from . import (
+        session,
+        _fetch_cookies,
+    )  # Import session and cookie function from __init__.py
+
     base_url = "https://www.nseindia.com/api"
     url = f"{base_url}/{endpoint}"
     headers = {
@@ -38,7 +48,9 @@ def fetch_data_from_nse(endpoint, retries=3, delay=2, timeout=10):
     for attempt in range(retries):
         try:
             logger.debug(f"Attempt {attempt + 1}: Making request to: {url}")
-            response = requests.get(url, headers=headers, timeout=timeout)
+            response = session.get(
+                url, headers=headers, timeout=timeout, cookies=_fetch_cookies()
+            )
             response.raise_for_status()
             logger.info(f"Successfully fetched data from {endpoint}")
             return response.json()
