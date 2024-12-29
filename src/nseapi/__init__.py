@@ -251,18 +251,18 @@ def get_all_indices() -> List[Dict]:
 
         indices = []
         for index in data.get("data", []):
-            index_data = {
-                "name": index.get("indexName"),
-                "last_price": index.get("last"),
-                "change": index.get("change"),
-                "percent_change": index.get("pChange"),
-                "high": index.get("high"),
-                "low": index.get("low"),
-                "open": index.get("open"),
-                "previous_close": index.get("previousClose"),
-            }
-            indices.append(index_data)
-
+            indices.append(
+                {
+                    "name": index.get("index"),  # Use the "index" key for the name
+                    "last_price": index.get("last"),
+                    "change": index.get("variation"),  # Use "variation" for change
+                    "percent_change": index.get("percentChange"),
+                    "high": index.get("high"),
+                    "low": index.get("low"),
+                    "open": index.get("open"),
+                    "previous_close": index.get("previousClose"),
+                }
+            )
         return indices
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch all indices: {e}")

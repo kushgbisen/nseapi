@@ -221,6 +221,14 @@ class TestNSEAPI(unittest.TestCase):
             self.assertIn(
                 "last_price", indices[0], "Index data should contain 'last_price' key"
             )
+            self.assertIn(
+                "change", indices[0], "Index data should contain 'change' key"
+            )
+            self.assertIn(
+                "percent_change",
+                indices[0],
+                "Index data should contain 'percent_change' key",
+            )
 
     def test_get_all_indices_api_error(self):
         """Test handling of API errors when fetching all indices."""
