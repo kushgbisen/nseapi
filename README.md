@@ -38,13 +38,17 @@ pip install .
 
 ### Fetching Market Status
 
-The `get_market_status` function retrieves the current market status, including whether the market is open or closed.
+The `get_market_status` function retrieves the current market status, including whether the market is open or closed. You can use the `pretty` parameter to print the output in a formatted table.
 
 ```python
 from nseapi import get_market_status
 
+# Fetch market status
 market_status = get_market_status()
 print("Market Status:", market_status)
+
+# Pretty print market status
+get_market_status(pretty=True)
 ```
 
 ### Downloading Bhavcopy
@@ -61,7 +65,7 @@ download_bhavcopy(date, download_dir='downloads')
 
 ### Fetching Stock Quotes
 
-The `get_stock_quote` function fetches the stock quote for a specific symbol, including the current price, open, high, low, close, and volume.
+The `get_stock_quote` function fetches the stock quote for a specific symbol, including the current price, open, high, low, close, and volume. The `pretty` parameter can be used to display the data in a formatted table.
 
 ```python
 from nseapi import get_stock_quote
@@ -69,11 +73,14 @@ from nseapi import get_stock_quote
 symbol = "INFY"
 quote = get_stock_quote(symbol)
 print("Stock Quote:", quote)
+
+# Pretty print stock quote
+get_stock_quote(symbol, pretty=True)
 ```
 
 ### Retrieving Option Chain Data
 
-The `get_option_chain` function retrieves the option chain data for a specific stock or index. This includes details about call and put options, strike prices, and open interest.
+The `get_option_chain` function retrieves the option chain data for a specific stock or index. This includes details about call and put options, strike prices, and open interest. The `pretty` parameter formats the output as a table.
 
 ```python
 from nseapi import get_option_chain
@@ -83,10 +90,16 @@ symbol = "RELIANCE"
 option_chain = get_option_chain(symbol)
 print("Option Chain for RELIANCE:", option_chain)
 
+# Pretty print option chain for a stock
+get_option_chain(symbol, pretty=True)
+
 # For an index
 symbol = "NIFTY"
 option_chain = get_option_chain(symbol, is_index=True)
 print("Option Chain for NIFTY:", option_chain)
+
+# Pretty print option chain for an index
+get_option_chain(symbol, is_index=True, pretty=True)
 ```
 
 ### Fetching Corporate Actions
@@ -129,13 +142,16 @@ print("Filtered Corporate Announcements:", announcements)
 
 ### Fetching All Indices
 
-The `get_all_indices` function fetches data for all NSE indices, including the last price, change, and percentage change.
+The `get_all_indices` function fetches data for all NSE indices, including the last price, change, and percentage change. The `pretty` parameter formats the output as a table.
 
 ```python
 from nseapi import get_all_indices
 
 indices = get_all_indices()
 print("All Indices:", indices)
+
+# Pretty print all indices
+get_all_indices(pretty=True)
 ```
 
 ### Helper Functions
@@ -174,7 +190,7 @@ The project is organized as follows:
 ├── .pre-commit-config.yaml   # Configuration for pre-commit hooks
 ├── LICENSE                   # License file for the project (MIT License)
 ├── README.md                 # Project documentation
-├── requirements.txt          # Lists project dependencies (currently only `requests`)
+├── requirements.txt          # Lists project dependencies
 ├── setup.py                  # Package setup configuration
 ├── src/                      # Source code directory
 │   └── nseapi/               # Main package directory

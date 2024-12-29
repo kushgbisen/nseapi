@@ -5,6 +5,9 @@ import zipfile
 import os
 from typing import List, Dict, Literal, Optional
 from functools import lru_cache
+from rich import print as rprint
+from rich.table import Table
+from rich.console import Console
 
 # Initialize a session for all requests
 session = requests.Session()
@@ -25,8 +28,11 @@ def _fetch_cookies():
     return session.cookies
 
 
-def get_market_status() -> Dict:
+def get_market_status(pretty: bool = False) -> Dict:
     """Fetch the current market status.
+
+    Args:
+        pretty (bool, optional): Whether to print the output in a prettified format. Defaults to False.
 
     Returns:
         Dict: A dictionary containing the market status.
@@ -35,7 +41,30 @@ def get_market_status() -> Dict:
     try:
         response = session.get(url, cookies=_fetch_cookies())
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        if pretty:
+            console = Console()
+            table = Table(title="Market Status", border_style="#555555")
+            table.add_column("Market", style="bold white")
+            table.add_column("Status", style="bold white")
+            table.add_column("Trade Date", style="bold white")
+            table.add_column("Index", style="bold white")
+            table.add_column("Last Price", style="bold white")
+            table.add_column("Change", style="bold white")
+            table.add_column("Percent Change", style="bold white")
+
+            for market in data["marketState"]:
+                table.add_row(
+                    market["market"],
+                    market["marketStatus"],
+                    market.get("tradeDate", "N/A"),
+                    market.get("index", "N/A"),
+                    str(market.get("last", "N/A")),
+                    str(market.get("variation", "N/A")),
+                    str(market.get("percentChange", "N/A")),
+                )
+            console.print(table)
+        return data
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch market status: {e}")
 
@@ -157,11 +186,12 @@ def bhavcopy_index(date: datetime, download_dir: str = None) -> Path:
         raise Exception(f"File operation failed: {e}")
 
 
-def get_stock_quote(symbol: str) -> Dict:
+def get_stock_quote(symbol: str, pretty: bool = False) -> Dict:
     """Fetch the stock quote for a specific symbol.
 
     Args:
         symbol (str): The stock symbol (e.g., "INFY", "RELIANCE").
+        pretty (bool, optional): Whether to print the output in a prettified format. Defaults to False.
 
     Returns:
         Dict: A dictionary containing the stock quote data.
@@ -192,6 +222,18 @@ def get_stock_quote(symbol: str) -> Dict:
             "52_week_low": data["priceInfo"]["weekHighLow"]["min"],
             "market_cap": data["securityInfo"].get("issuedSize", "N/A"),
         }
+
+        if pretty:
+            console = Console()
+            table = Table(title=f"Stock Quote for {symbol}", border_style="#555555")
+            table.add_column("Field", style="bold white")
+            table.add_column("Value", style="bold white")
+
+            for key, value in quote_data.items():
+                table.add_row(key, str(value))
+
+            console.print(table)
+
         return quote_data
     except requests.exceptions.HTTPError as e:
         if response.status_code == 404:
@@ -201,12 +243,13 @@ def get_stock_quote(symbol: str) -> Dict:
         raise Exception(f"API request failed: {e}")
 
 
-def get_option_chain(symbol: str, is_index: bool = False) -> Dict:
+def get_option_chain(symbol: str, is_index: bool = False, pretty: bool = False) -> Dict:
     """Fetch the option chain for a specific stock or index.
 
     Args:
         symbol (str): The stock or index symbol (e.g., "NIFTY", "BANKNIFTY", "RELIANCE").
         is_index (bool): Whether the symbol is an index. Defaults to False.
+        pretty (bool, optional): Whether to print the output in a prettified format. Defaults to False.
 
     Returns:
         Dict: A dictionary containing the option chain data.
@@ -225,6 +268,39 @@ def get_option_chain(symbol: str, is_index: bool = False) -> Dict:
         if not data.get("records"):
             raise ValueError(f"Invalid symbol: {symbol}")
 
+        if pretty:
+            console = Console()
+            table = Table(title=f"Option Chain for {symbol}", border_style="#555555")
+            table.add_column("Strike Price", style="bold white")
+            table.add_column("Expiry Date", style="bold white")
+            table.add_column("Call/Put", style="bold white")
+            table.add_column("Last Price", style="bold white")
+            table.add_column("Open Interest", style="bold white")
+
+            for record in data["records"]["data"]:
+                strike_price = record["strikePrice"]
+                expiry_date = record["expiryDate"]
+                if "CE" in record:
+                    ce = record["CE"]
+                    table.add_row(
+                        str(strike_price),
+                        expiry_date,
+                        "Call",
+                        str(ce["lastPrice"]),
+                        str(ce["openInterest"]),
+                    )
+                if "PE" in record:
+                    pe = record["PE"]
+                    table.add_row(
+                        str(strike_price),
+                        expiry_date,
+                        "Put",
+                        str(pe["lastPrice"]),
+                        str(pe["openInterest"]),
+                    )
+
+            console.print(table)
+
         return data
     except requests.exceptions.HTTPError as e:
         if response.status_code == 404:
@@ -234,8 +310,11 @@ def get_option_chain(symbol: str, is_index: bool = False) -> Dict:
         raise Exception(f"API request failed: {e}")
 
 
-def get_all_indices() -> List[Dict]:
+def get_all_indices(pretty: bool = False) -> List[Dict]:
     """Fetch data for all NSE indices.
+
+    Args:
+        pretty (bool, optional): Whether to print the output in a prettified format. Defaults to False.
 
     Returns:
         List[Dict]: A list of dictionaries containing index data.
@@ -263,6 +342,32 @@ def get_all_indices() -> List[Dict]:
                     "previous_close": index.get("previousClose"),
                 }
             )
+
+        if pretty:
+            console = Console()
+            table = Table(title="All Indices", border_style="#555555")
+            table.add_column("Name", style="bold white")
+            table.add_column("Last Price", style="bold white")
+            table.add_column("Change", style="bold white")
+            table.add_column("Percent Change", style="bold white")
+            table.add_column("High", style="bold white")
+            table.add_column("Low", style="bold white")
+            table.add_column("Open", style="bold white")
+            table.add_column("Previous Close", style="bold white")
+
+            for index in indices:
+                table.add_row(
+                    index["name"],
+                    str(index["last_price"]),
+                    str(index["change"]),
+                    str(index["percent_change"]),
+                    str(index["high"]),
+                    str(index["low"]),
+                    str(index["open"]),
+                    str(index["previous_close"]),
+                )
+            console.print(table)
+
         return indices
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch all indices: {e}")
