@@ -3,7 +3,6 @@
 NSEAPI is a Python package designed for seamless interaction with the National Stock Exchange (NSE) of India. It provides a robust and easy-to-use interface to fetch market data, download historical bhavcopies, retrieve stock quotes, analyze option chains, and more. This package is ideal for developers, traders, and analysts who need programmatic access to NSE data.
 
 ## Table of Contents
-
 - [Installation](#installation)
 - [Usage](#usage)
   - [Fetching Market Status](#fetching-market-status)
@@ -15,11 +14,11 @@ NSEAPI is a Python package designed for seamless interaction with the National S
   - [Fetching All Indices](#fetching-all-indices)
   - [Helper Functions](#helper-functions)
   - [Logging](#logging)
+- [Troubleshooting](#troubleshooting)
 - [Project Structure](#project-structure)
 - [License](#license)
 
 ## Installation
-
 To install the NSEAPI package, ensure that you have Python 3.8 or higher installed on your system. Then, use `pip` to install the package:
 
 ```bash
@@ -37,7 +36,6 @@ pip install .
 ## Usage
 
 ### Fetching Market Status
-
 The `get_market_status` function retrieves the current market status, including whether the market is open or closed. You can use the `pretty` parameter to print the output in a formatted table.
 
 ```python
@@ -52,7 +50,6 @@ get_market_status(pretty=True)
 ```
 
 ### Downloading Bhavcopy
-
 The `download_bhavcopy` function downloads the equity bhavcopy (a daily report of stock prices) for a specific date. The file is saved in the specified directory.
 
 ```python
@@ -64,7 +61,6 @@ download_bhavcopy(date, download_dir='downloads')
 ```
 
 ### Fetching Stock Quotes
-
 The `get_stock_quote` function fetches the stock quote for a specific symbol, including the current price, open, high, low, close, and volume. The `pretty` parameter can be used to display the data in a formatted table.
 
 ```python
@@ -79,7 +75,6 @@ get_stock_quote(symbol, pretty=True)
 ```
 
 ### Retrieving Option Chain Data
-
 The `get_option_chain` function retrieves the option chain data for a specific stock or index. This includes details about call and put options, strike prices, and open interest. The `pretty` parameter formats the output as a table.
 
 ```python
@@ -103,8 +98,7 @@ get_option_chain(symbol, is_index=True, pretty=True)
 ```
 
 ### Fetching Corporate Actions
-
-The `get_corporate_actions` function fetches forthcoming corporate actions (e.g., dividends, stock splits) for a specific segment or symbol.
+The `get_corporate_actions` function fetches forthcoming corporate actions (e.g., dividends, stock splits) for a specific segment or symbol. You can filter the results by date range.
 
 ```python
 from nseapi import get_corporate_actions
@@ -117,13 +111,17 @@ print("Corporate Actions:", actions)
 # Fetch corporate actions for a specific symbol and date range
 from_date = datetime(2023, 1, 1)
 to_date = datetime(2023, 12, 31)
-actions = get_corporate_actions(segment="equities", symbol="HDFCBANK", from_date=from_date, to_date=to_date)
+actions = get_corporate_actions(
+    segment="equities",
+    symbol="HDFCBANK",
+    from_date=from_date,
+    to_date=to_date
+)
 print("Filtered Corporate Actions:", actions)
 ```
 
 ### Fetching Corporate Announcements
-
-The `get_announcements` function fetches corporate announcements for a specific segment or symbol.
+The `get_announcements` function fetches corporate announcements for a specific segment or symbol. You can filter the results by date range and include only FnO stocks.
 
 ```python
 from nseapi import get_announcements
@@ -136,12 +134,16 @@ print("Corporate Announcements:", announcements)
 # Fetch corporate announcements for a specific symbol and date range
 from_date = datetime(2023, 1, 1)
 to_date = datetime(2023, 12, 31)
-announcements = get_announcements(index="equities", symbol="HDFCBANK", from_date=from_date, to_date=to_date)
+announcements = get_announcements(
+    index="equities",
+    symbol="HDFCBANK",
+    from_date=from_date,
+    to_date=to_date
+)
 print("Filtered Corporate Announcements:", announcements)
 ```
 
 ### Fetching All Indices
-
 The `get_all_indices` function fetches data for all NSE indices, including the last price, change, and percentage change. The `pretty` parameter formats the output as a table.
 
 ```python
@@ -155,7 +157,6 @@ get_all_indices(pretty=True)
 ```
 
 ### Helper Functions
-
 The package also provides helper functions for specific tasks. For instance, `fetch_data_from_nse` allows you to retrieve data from a specific NSE API endpoint.
 
 ```python
@@ -167,23 +168,26 @@ print("Data from NSE:", data)
 ```
 
 ### Logging
-
 The package includes built-in logging functionality that tracks API interactions:
 - **Debug level:** Records API request attempts.
 - **Info level:** Logs successful responses.
 - **Error level:** Captures failed requests with details.
 
 Logs are written to `nseapi.log` in the current working directory. Example log output:
-
 ```
 2024-12-27 06:53:03 - INFO - Successfully fetched data from marketStatus
 2024-12-27 06:53:04 - ERROR - Failed to fetch data from invalid_endpoint: 404 Client Error
 ```
 
+## Troubleshooting
+
+### Common Issues
+- **API Errors**: Ensure you have a stable internet connection and are not hitting rate limits. If the issue persists, check the NSE website for API status.
+- **Invalid Symbols**: Verify that the symbol you’re using is valid and supported by the NSE.
+- **File Download Failures**: Ensure the specified download directory exists and is writable.
+
 ## Project Structure
-
 The project is organized as follows:
-
 ```
 ./
 ├── .gitignore                # Specifies files and directories to ignore in Git
@@ -202,5 +206,4 @@ The project is organized as follows:
 ```
 
 ## License
-
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
