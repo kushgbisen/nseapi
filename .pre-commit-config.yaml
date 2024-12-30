@@ -1,24 +1,39 @@
 repos:
-  # Run pytest
+
   - repo: local
+
     hooks:
+
       - id: pytest
+
         name: Run pytest
+
         entry: pytest tests -v
-        language: system
+
+        language: python
+
         pass_filenames: false
 
-  # Run Black and automatically stage changes
+
+
   - repo: https://github.com/psf/black
+
     rev: 24.10.0
+
     hooks:
+
       - id: black
+
         name: Run Black
-        language: system
-        args: [--verbose]
-        stages: [commit]
-        additional_dependencies: [black==24.10.0]
+
+        language: python
+
+        args: [--verbose, src/, tests/, setup.py]
+
+        stages: [pre-commit]
+
+        additional_dependencies: []
+
         require_serial: true
-        # Automatically stage changes made by Black
-        always_run: true
+
         pass_filenames: false

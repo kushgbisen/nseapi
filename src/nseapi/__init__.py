@@ -8,6 +8,7 @@ from functools import lru_cache
 from rich import print as rprint
 from rich.table import Table
 from rich.console import Console
+from .helpers import fetch_data_from_nse
 
 # Initialize a session for all requests
 session = requests.Session()
@@ -461,6 +462,29 @@ def get_announcements(
         raise Exception(f"Failed to fetch corporate announcements: {e}")
 
 
+def get_holidays(
+    holiday_type: Literal["trading", "clearing"] = "trading"
+) -> Dict[str, List[Dict]]:
+    """Fetch NSE holiday lists for trading or clearing.
+    Args:
+        holiday_type (Literal["trading", "clearing"]): Type of holiday list to fetch. Defaults to "trading".
+    Returns:
+        Dict[str, List[Dict]]: A dictionary containing holiday lists for different market segments.
+    Raises:
+        ValueError: If `holiday_type` is not "trading" or "clearing".
+        Exception: If the API request fails.
+    """
+    if holiday_type not in ["trading", "clearing"]:
+        raise ValueError("holiday_type must be 'trading' or 'clearing'")
+    endpoint = "holiday-master"
+    params = {"type": holiday_type}
+    try:
+        data = fetch_data_from_nse(endpoint, params=params)
+        return data
+    except Exception as e:
+        raise Exception(f"Failed to fetch holiday information: {e}")
+
+
 __version__ = "0.1.0"
 __all__ = [
     "get_market_status",
@@ -472,4 +496,5 @@ __all__ = [
     "get_all_indices",
     "get_corporate_actions",
     "get_announcements",
+    "get_holidays",
 ]
