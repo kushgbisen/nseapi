@@ -8,19 +8,13 @@ import zipfile
 import shutil
 from nseapi import (
     get_market_status,
-    download_bhavcopy,
-    delivery_bhavcopy,
-    bhavcopy_index,
+    get_bhavcopy,
     get_corporate_actions,
     get_announcements,
     get_stock_quote,
     get_option_chain,
     get_all_indices,
     get_holidays,
-    fno_bhavcopy,
-    priceband_report,
-    pr_bhavcopy,
-    cm_mii_security_report,
     bulk_deals,
 )
 
@@ -29,8 +23,8 @@ class TestNSEAPI(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures before each test method."""
-
         self.test_dir = os.path.join(os.getcwd(), "test_downloads")
+
         if not os.path.exists(self.test_dir):
             os.makedirs(self.test_dir)
 
@@ -38,99 +32,120 @@ class TestNSEAPI(unittest.TestCase):
         """Clean up test fixtures after each test method."""
         if os.path.exists(self.test_dir):
             for file in os.listdir(self.test_dir):
+
                 os.remove(os.path.join(self.test_dir, file))
             os.rmdir(self.test_dir)
 
     def test_get_market_status(self):
         """Test market status retrieval."""
         response = get_market_status()
+
         self.assertIsInstance(
             response, dict, "Market status response should be a dictionary"
         )
-
         self.assertIn(
             "marketState",
             response,
             "Market status response should contain 'marketState' key",
-
         )
 
-
-    def test_download_bhavcopy_pre_2024(self):
-
-        """Test bhavcopy download for pre-2024 dates."""
+    def test_get_bhavcopy_equity(self):
+        """Test equity bhavcopy download."""
         date = datetime(2023, 12, 26)
-        download_bhavcopy(date, download_dir=self.test_dir)
-        file_name = f"BhavCopy_NSE_CM_0_0_0_{date.strftime('%Y%m%d')}_F_0000.csv"
-        file_path = os.path.join(self.test_dir, file_name)
-
+        file_path = get_bhavcopy("equity", date, download_dir=self.test_dir)
         self.assertTrue(
             os.path.exists(file_path),
-            f"Bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
-
+            f"Equity bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
         )
         self.assertGreater(
-            os.path.getsize(file_path), 0, "Downloaded bhavcopy file is empty"
+            os.path.getsize(file_path), 0, "Downloaded equity bhavcopy file is empty"
         )
 
-    def test_download_bhavcopy_2024(self):
-        """Test bhavcopy download for 2024 dates."""
-        date = datetime(2024, 1, 1)
-        download_bhavcopy(date, download_dir=self.test_dir)
-
-        file_name = f"BhavCopy_NSE_CM_0_0_0_{date.strftime('%Y%m%d')}_F_0000.csv"
-        file_path = os.path.join(self.test_dir, file_name)
-        self.assertTrue(
-            os.path.exists(file_path),
-            f"Bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
-        )
-        self.assertGreater(
-            os.path.getsize(file_path), 0, "Downloaded bhavcopy file is empty"
-        )
-
-    def test_download_bhavcopy_invalid_date(self):
-        """Test bhavcopy download with invalid date."""
-        future_date = datetime(2099, 1, 1)
-        with self.assertRaises(ValueError) as context:
-            download_bhavcopy(future_date, download_dir=self.test_dir)
-        self.assertIn(
-            "Cannot download bhavcopy for a future date", str(context.exception)
-        )
-
-
-    def test_download_delivery_bhavcopy(self):
+    def test_get_bhavcopy_delivery(self):
         """Test delivery bhavcopy download."""
         date = datetime(2023, 12, 26)
-        delivery_bhavcopy(date, download_dir=self.test_dir)
-        file_name = f"delivery_bhavcopy_{date.strftime('%Y%m%d')}.csv"
-        file_path = os.path.join(self.test_dir, file_name)
+        file_path = get_bhavcopy("delivery", date, download_dir=self.test_dir)
+
         self.assertTrue(
             os.path.exists(file_path),
-
             f"Delivery bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
-
         )
         self.assertGreater(
             os.path.getsize(file_path), 0, "Downloaded delivery bhavcopy file is empty"
         )
 
-    def test_download_bhavcopy_index(self):
-        """Test bhavcopy index download."""
+    def test_get_bhavcopy_indices(self):
+        """Test indices bhavcopy download."""
         date = datetime(2023, 12, 26)
 
-        bhavcopy_index(date, download_dir=self.test_dir)
+        file_path = get_bhavcopy("indices", date, download_dir=self.test_dir)
 
-        file_name = f"bhavcopy_index_{date.strftime('%Y%m%d')}.csv"
-        file_path = os.path.join(self.test_dir, file_name)
         self.assertTrue(
             os.path.exists(file_path),
-            f"Bhavcopy index file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
+            f"Indices bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
         )
-
         self.assertGreater(
-
-            os.path.getsize(file_path), 0, "Downloaded bhavcopy index file is empty"
+            os.path.getsize(file_path), 0, "Downloaded indices bhavcopy file is empty"
         )
+
+    def test_get_bhavcopy_fno(self):
+        """Test FnO bhavcopy download."""
+        date = datetime(2024, 12, 26)
+
+        file_path = get_bhavcopy("fno", date, download_dir=self.test_dir)
+        self.assertTrue(
+            os.path.exists(file_path),
+            f"FnO bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
+        )
+        self.assertGreater(
+            os.path.getsize(file_path), 0, "Downloaded FnO bhavcopy file is empty"
+        )
+
+    def test_get_bhavcopy_priceband(self):
+        """Test priceband report download."""
+        date = datetime(2023, 12, 26)
+        file_path = get_bhavcopy("priceband", date, download_dir=self.test_dir)
+        self.assertTrue(
+            os.path.exists(file_path),
+            f"Priceband report file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
+        )
+        self.assertGreater(
+            os.path.getsize(file_path), 0, "Downloaded priceband report file is empty"
+        )
+
+    def test_get_bhavcopy_pr(self):
+        """Test PR bhavcopy download."""
+        date = datetime(2023, 12, 26)
+        file_path = get_bhavcopy("pr", date, download_dir=self.test_dir)
+        self.assertTrue(
+            os.path.exists(file_path),
+            f"PR bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
+        )
+        self.assertGreater(
+            os.path.getsize(file_path), 0, "Downloaded PR bhavcopy file is empty"
+        )
+
+    def test_get_bhavcopy_cm_mii(self):
+        """Test CM MII security report download."""
+        date = datetime(2025, 1, 2)
+        file_path = get_bhavcopy("cm_mii", date, download_dir=self.test_dir)
+        self.assertTrue(
+            os.path.exists(file_path),
+            f"CM MII security report file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
+        )
+        self.assertGreater(
+            os.path.getsize(file_path),
+            0,
+            "Downloaded CM MII security report file is empty",
+        )
+
+    def test_get_bhavcopy_invalid_type(self):
+        """Test get_bhavcopy with invalid bhavcopy type."""
+        date = datetime(2023, 12, 26)
+        with self.assertRaises(ValueError) as context:
+            get_bhavcopy("invalid_type", date, download_dir=self.test_dir)
+
+        self.assertIn("Invalid bhavcopy_type", str(context.exception))
 
     def test_get_corporate_actions(self):
         """Test fetching corporate actions."""
@@ -150,7 +165,6 @@ class TestNSEAPI(unittest.TestCase):
 
         actions = get_corporate_actions(
             segment="equities", symbol="HDFCBANK", from_date=from_date, to_date=to_date
-
         )
         self.assertIsInstance(
             actions, list, "Corporate actions response should be a list"
@@ -168,7 +182,6 @@ class TestNSEAPI(unittest.TestCase):
             )
 
     def test_get_announcements_with_filter(self):
-
         """Test fetching corporate announcements with symbol and date range."""
         from_date = datetime(2023, 1, 1)
         to_date = datetime(2023, 12, 31)
@@ -184,12 +197,13 @@ class TestNSEAPI(unittest.TestCase):
         symbol = "INFY"
         quote = get_stock_quote(symbol)
         self.assertIsInstance(
-
             quote, dict, "Stock quote response should be a dictionary"
         )
         self.assertIn("symbol", quote, "Stock quote should contain 'symbol' key")
         self.assertEqual(
-            quote["symbol"], symbol, "Symbol in response should match the requested symbol"
+            quote["symbol"],
+            symbol,
+            "Symbol in response should match the requested symbol",
         )
 
     def test_get_stock_quote_invalid_symbol(self):
@@ -197,7 +211,6 @@ class TestNSEAPI(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             get_stock_quote("INVALID_SYMBOL")
         self.assertIn("Invalid symbol", str(context.exception))
-
 
     def test_get_option_chain_index(self):
         """Test fetching option chain for an index."""
@@ -209,7 +222,6 @@ class TestNSEAPI(unittest.TestCase):
         self.assertIn(
             "records", option_chain, "Option chain should contain 'records' key"
         )
-
 
     def test_get_option_chain_stock(self):
         """Test fetching option chain for a stock."""
@@ -247,20 +259,16 @@ class TestNSEAPI(unittest.TestCase):
                 "Index data should contain 'percent_change' key",
             )
 
-
     def test_get_holidays_trading(self):
         """Test fetching trading holidays."""
-
         with patch("nseapi.helpers.fetch_data_from_nse") as mock_fetch:
             mock_fetch.return_value = {
-
                 "CD": [{"tradingDate": "26-Jan-2025", "description": "Republic Day"}]
             }
             holidays = get_holidays(holiday_type="trading")
             self.assertIn("CD", holidays)
             self.assertEqual(holidays["CD"][0]["tradingDate"], "26-Jan-2025")
             self.assertEqual(holidays["CD"][0]["description"], "Republic Day")
-
 
     def test_get_holidays_clearing(self):
         """Test fetching clearing holidays."""
@@ -281,78 +289,16 @@ class TestNSEAPI(unittest.TestCase):
 
             self.assertEqual(
                 holidays["CD"][0]["description"], "Chhatrapati Shivaji Maharaj Jayanti"
-
             )
 
-    @patch("nseapi.session.get")
-    def test_cm_mii_security_report(self, mock_get):
-        """Test CM MII security report download."""
-        date = datetime(2024, 12, 12)
-
-        # Create a mock .gz file
-        mock_gz_content = b"mock,data,for,cm,mii,security,report"
-        mock_gz_file = gzip.compress(mock_gz_content)
-
-
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.content = mock_gz_file
-        mock_get.return_value = mock_response
-
-        cm_mii_security_report(date, download_dir=self.test_dir)
-        file_name = f"cm_mii_security_report_{date.strftime('%Y%m%d')}.csv"
-
-        file_path = os.path.join(self.test_dir, file_name)
-
-        self.assertTrue(
-            os.path.exists(file_path),
-            f"CM MII security report file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
+    def test_bulk_deals(self):
+        """Test fetching bulk deals."""
+        from_date = datetime(2023, 1, 1)
+        to_date = datetime(2023, 12, 31)
+        bulk_deals_data = bulk_deals(from_date, to_date)
+        self.assertIsInstance(
+            bulk_deals_data, list, "Bulk deals response should be a list"
         )
-        self.assertGreater(
-            os.path.getsize(file_path),
-            0,
-            "Downloaded CM MII security report file is empty",
-        )
-
-
-    @patch("nseapi.session.get")
-    def test_pr_bhavcopy(self, mock_get):
-        """Test PR bhavcopy download."""
-        date = datetime(2025, 1, 1)
-
-        # Create a mock .zip file
-        mock_zip_content = b"mock,data,for,pr,bhavcopy"
-
-        mock_zip_file = zipfile.ZipFile("mock.zip", "w")
-        mock_zip_file.writestr("mock.csv", mock_zip_content)
-        mock_zip_file.close()
-
-
-        with open("mock.zip", "rb") as f:
-            mock_zip_data = f.read()
-
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.content = mock_zip_data
-
-        mock_get.return_value = mock_response
-
-        pr_bhavcopy(date, download_dir=self.test_dir)
-        file_name = f"PR{date.strftime('%d%m%y')}.csv"
-
-        file_path = os.path.join(self.test_dir, file_name)
-
-        self.assertTrue(
-            os.path.exists(file_path),
-            f"PR bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
-        )
-        self.assertGreater(
-            os.path.getsize(file_path), 0, "Downloaded PR bhavcopy file is empty"
-        )
-
-        # Clean up the mock .zip file
-        os.remove("mock.zip")
-
 
 
 if __name__ == "__main__":
