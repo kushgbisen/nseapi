@@ -3,7 +3,10 @@ from pathlib import Path
 import requests
 import zipfile
 import os
-from typing import List, Dict, Literal, Optional
+import zlib
+import gzip
+import shutil
+from typing import List, Dict, Literal, Optional, Union
 from functools import lru_cache
 from rich import print as rprint
 from rich.table import Table
@@ -485,7 +488,222 @@ def get_holidays(
         raise Exception(f"Failed to fetch holiday information: {e}")
 
 
+def fno_bhavcopy(date: datetime, download_dir: str = None) -> Path:
+    """Download the daily Udiff format FnO bhavcopy report for a specific date."""
+
+    target_directory = Path(download_dir) if download_dir else Path.cwd()
+    target_directory.mkdir(parents=True, exist_ok=True)
+
+    url = f"https://nsearchives.nseindia.com/content/fo/BhavCopy_NSE_FO_0_0_0_{date.strftime('%Y%m%d')}_F_0000.csv.zip"
+
+    try:
+        response = session.get(url, cookies=_fetch_cookies())
+        response.raise_for_status()
+
+        zip_path = target_directory / f"fno_bhavcopy_{date.strftime('%Y%m%d')}.zip"
+        with open(zip_path, "wb") as file:
+            file.write(response.content)
+
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            zip_ref.extractall(target_directory)
+
+        extracted_csv_name = zip_ref.namelist()[0]
+        extracted_csv_path = target_directory / extracted_csv_name
+
+        new_csv_name = f"BhavCopy_NSE_FO_0_0_0_{date.strftime('%Y%m%d')}_F_0000.csv"
+        new_csv_path = target_directory / new_csv_name
+
+        if extracted_csv_path != new_csv_path:
+            os.rename(extracted_csv_path, new_csv_path)
+
+        os.remove(zip_path)
+        return new_csv_path
+
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to download FnO bhavcopy: {e}")
+    except zipfile.BadZipFile as e:
+        raise Exception(f"Invalid zip file received: {e}")
+    except OSError as e:
+        raise Exception(f"File operation failed: {e}")
+
+
+def priceband_report(date: datetime, download_dir: str = None) -> Path:
+    """Download the daily priceband report for a specific date."""
+    target_directory = Path(download_dir) if download_dir else Path.cwd()
+    target_directory.mkdir(parents=True, exist_ok=True)
+
+    url = f"https://nsearchives.nseindia.com/content/equities/sec_list_{date.strftime('%d%m%Y')}.csv"
+
+    try:
+        response = session.get(url, cookies=_fetch_cookies())
+        response.raise_for_status()
+
+        csv_path = target_directory / f"priceband_report_{date.strftime('%Y%m%d')}.csv"
+
+        with open(csv_path, "wb") as file:
+            file.write(response.content)
+
+        return csv_path
+
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to download priceband report: {e}")
+    except OSError as e:
+        raise Exception(f"File operation failed: {e}")
+
+
+def pr_bhavcopy(date: datetime, download_dir: str = None) -> Path:
+    """Download the daily PR Bhavcopy zip report for a specific date.
+
+    Args:
+
+        date (datetime): The date for which to download the report.
+        download_dir (str, optional): Directory to save the file. Defaults to the current directory.
+
+    Returns:
+        Path: Path to the downloaded CSV file.
+
+    Raises:
+        FileNotFoundError: If the file download fails or the file is corrupted.
+        RuntimeError: If the file cannot be processed (e.g., invalid format).
+    """
+
+    target_directory = Path(download_dir) if download_dir else Path.cwd()
+    target_directory.mkdir(parents=True, exist_ok=True)
+
+    # Construct the URL for the PR Bhavcopy
+    url = f"https://nsearchives.nseindia.com/archives/equities/bhavcopy/pr/PR{date.strftime('%d%m%y')}.zip"
+
+    try:
+        # Download the file
+        response = session.get(url, cookies=_fetch_cookies())
+        response.raise_for_status()
+
+        # Save the .zip file
+        zip_path = target_directory / f"pr_bhavcopy_{date.strftime('%Y%m%d')}.zip"
+        with open(zip_path, "wb") as file:
+            file.write(response.content)
+
+        # Extract the .zip file
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+
+            zip_ref.extractall(target_directory)
+
+        # Get the name of the extracted CSV file
+        extracted_csv_name = zip_ref.namelist()[0]
+        extracted_csv_path = target_directory / extracted_csv_name
+
+        # Rename the extracted file to a consistent name
+        new_csv_name = f"PR{date.strftime('%d%m%y')}.csv"
+        new_csv_path = target_directory / new_csv_name
+
+        if extracted_csv_path != new_csv_path:
+            os.rename(extracted_csv_path, new_csv_path)
+
+        # Clean up the .zip file
+        os.remove(zip_path)
+
+        return new_csv_path
+
+    except requests.exceptions.RequestException as e:
+        raise FileNotFoundError(f"Failed to download PR bhavcopy: {e}")
+    except zipfile.BadZipFile as e:
+        raise RuntimeError(f"Invalid zip file received: {e}")
+    except OSError as e:
+        raise RuntimeError(f"File operation failed: {e}")
+
+
+def cm_mii_security_report(date: datetime, download_dir: str = None) -> Path:
+    """Download the daily CM MII security file report for a specific date.
+
+    Args:
+        date (datetime): The date for which to download the report.
+        download_dir (str, optional): Directory to save the file. Defaults to the current directory.
+
+    Returns:
+        Path: Path to the downloaded CSV file.
+
+    Raises:
+        FileNotFoundError: If the file download fails or the file is corrupted.
+        RuntimeError: If the file cannot be processed (e.g., invalid format).
+    """
+    target_directory = Path(download_dir) if download_dir else Path.cwd()
+    target_directory.mkdir(parents=True, exist_ok=True)
+
+    # Construct the URL for the CM MII security report
+    url = f"https://nsearchives.nseindia.com/content/cm/NSE_CM_security_{date.strftime('%d%m%Y')}.csv.gz"
+
+    try:
+        # Download the file
+        response = session.get(url, cookies=_fetch_cookies())
+        response.raise_for_status()
+
+        # Save the .gz file
+
+        gz_path = (
+            target_directory
+            / f"cm_mii_security_report_{date.strftime('%Y%m%d')}.csv.gz"
+        )
+        with open(gz_path, "wb") as file:
+            file.write(response.content)
+
+        # Attempt to extract the .gz file
+        csv_path = (
+            target_directory / f"cm_mii_security_report_{date.strftime('%Y%m%d')}.csv"
+        )
+        try:
+            with gzip.open(gz_path, "rb") as gz_file:
+                with open(csv_path, "wb") as csv_file:
+                    shutil.copyfileobj(gz_file, csv_file)
+        except gzip.BadGzipFile:
+
+            # If the file is not a valid .gz file, assume it is already a CSV file
+            logger.warning(
+                "File is not a valid .gz file. Assuming it is already a CSV file."
+            )
+            csv_path = gz_path.with_suffix(".csv")
+
+            gz_path.rename(csv_path)
+        except Exception as e:
+            # Handle other extraction errors
+            raise RuntimeError(f"Failed to extract .gz file: {e}")
+        finally:
+            # Clean up the .gz file
+            if gz_path.exists():
+                gz_path.unlink()
+
+        return csv_path
+
+    except requests.exceptions.RequestException as e:
+        raise FileNotFoundError(f"Failed to download CM MII security report: {e}")
+    except Exception as e:
+
+        raise RuntimeError(f"Failed to process CM MII security report: {e}")
+
+
+def bulk_deals(from_date: datetime, to_date: datetime) -> List[Dict]:
+    """Download the bulk deals report for the specified date range."""
+    if (to_date - from_date).days > 365:
+        raise ValueError("The date range cannot exceed one year.")
+
+    url = f"https://www.nseindia.com/api/historical/bulk-deals?from={from_date.strftime('%d-%m-%Y')}&to={to_date.strftime('%d-%m-%Y')}"
+
+    try:
+        response = session.get(url, cookies=_fetch_cookies())
+        response.raise_for_status()
+        data = response.json()
+
+        if not data.get("data"):
+            raise RuntimeError(
+                "No bulk deals data available for the specified date range."
+            )
+
+        return data["data"]
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to download bulk deals: {e}")
+
+
 __version__ = "0.1.0"
+
 __all__ = [
     "get_market_status",
     "download_bhavcopy",
@@ -497,4 +715,9 @@ __all__ = [
     "get_corporate_actions",
     "get_announcements",
     "get_holidays",
+    "fno_bhavcopy",
+    "priceband_report",
+    "pr_bhavcopy",
+    "cm_mii_security_report",
+    "bulk_deals",
 ]
