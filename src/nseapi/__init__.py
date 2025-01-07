@@ -4,16 +4,15 @@ import requests
 import zipfile
 
 import os
-import zlib
 import gzip
 import shutil
-
 from typing import List, Dict, Literal, Optional, Union
 from functools import lru_cache
 from rich import print as rprint
 from rich.table import Table
 from rich.console import Console
-from .helpers import fetch_data_from_nse
+import logging 
+from time import sleep 
 
 # Initialize a session for all requests
 session = requests.Session()
@@ -22,19 +21,77 @@ session.headers.update(
     {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         "Accept": "*/*",
+
         "Accept-Language": "en-US,en;q=0.9",
+
         "Referer": "https://www.nseindia.com/",
         "Origin": "https://www.nseindia.com",
+
     }
 )
 
+# Set up logging
+logger = logging.getLogger("NSEIndia")
+
+logger.setLevel(logging.INFO)
+logs_dir = Path("logs")
+logs_dir.mkdir(exist_ok=True)
+if not logger.handlers:
+    handler = logging.FileHandler(logs_dir / "nseapi.log")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
 
 # Fetch cookies required for API access
 def _fetch_cookies():
-
     session.get("https://www.nseindia.com/")
     return session.cookies
 
+
+def fetch_data_from_nse(endpoint, params=None, retries=3, delay=2, timeout=10):
+    """Fetch data from a given NSE endpoint with retry logic and caching.
+
+    Args:
+        endpoint (str): The API endpoint to fetch data from.
+        params (dict, optional): Query parameters for the request. Defaults to None.
+        retries (int, optional): Number of retry attempts. Defaults to 3.
+        delay (int, optional): Delay between retries in seconds. Defaults to 2.
+        timeout (int, optional): Timeout for the request in seconds. Defaults to 10.
+
+    Returns:
+        dict: JSON response from the API.
+
+    Raises:
+        requests.RequestException: If the request fails after all retries.
+    """
+    base_url = "https://www.nseindia.com/api"
+    url = f"{base_url}/{endpoint}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/118.0"
+    }
+    for attempt in range(retries):
+        try:
+            logger.debug(f"Attempt {attempt + 1}: Making request to: {url}")
+            response = session.get(
+                url,
+                headers=headers,
+                params=params,
+
+                timeout=timeout,
+                cookies=_fetch_cookies(),
+            )
+            response.raise_for_status()
+            logger.info(f"Successfully fetched data from {endpoint}")
+            return response.json()
+
+        except requests.RequestException as e:
+            logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
+            if attempt < retries - 1:
+                sleep(delay)
+            else:
+                logger.error(
+                    f"Failed to fetch data from {endpoint} after {retries} attempts: {str(e)}"
+                )
+                raise
 
 def get_market_status(pretty: bool = False) -> Dict:
     """Fetch the current market status.
@@ -53,16 +110,17 @@ def get_market_status(pretty: bool = False) -> Dict:
         response.raise_for_status()
         data = response.json()
 
+
         if pretty:
             console = Console()
             table = Table(title="Market Status", border_style="#555555")
             table.add_column("Market", style="bold white")
             table.add_column("Status", style="bold white")
             table.add_column("Trade Date", style="bold white")
+
             table.add_column("Index", style="bold white")
             table.add_column("Last Price", style="bold white")
             table.add_column("Change", style="bold white")
-
             table.add_column("Percent Change", style="bold white")
 
             for market in data["marketState"]:
@@ -71,7 +129,9 @@ def get_market_status(pretty: bool = False) -> Dict:
                     market["marketStatus"],
                     market.get("tradeDate", "N/A"),
                     market.get("index", "N/A"),
+
                     str(market.get("last", "N/A")),
+
                     str(market.get("variation", "N/A")),
                     str(market.get("percentChange", "N/A")),
                 )
@@ -79,7 +139,6 @@ def get_market_status(pretty: bool = False) -> Dict:
         return data
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch market status: {e}")
-
 
 def get_bhavcopy(
     bhavcopy_type: Literal[
@@ -90,21 +149,19 @@ def get_bhavcopy(
 ) -> Path:
     """Download the specified type of bhavcopy report for the given date.
 
-
     Args:
+
         bhavcopy_type: Type of bhavcopy to download. Options: "equity", "delivery", "indices", "fno", "priceband", "pr", "cm_mii".
         date: The date for which to download the bhavcopy.
+
         download_dir: Directory to save the file. Defaults to the current directory.
 
     Returns:
         Path: Path to the downloaded file.
 
-
     Raises:
-
         ValueError: If the folder is not a directory or the bhavcopy_type is invalid.
         FileNotFoundError: If the download fails or the file is corrupted.
-
         RuntimeError: If the report is unavailable or not yet updated.
     """
     target_directory = Path(download_dir) if download_dir else Path.cwd()
@@ -117,9 +174,9 @@ def get_bhavcopy(
         else:
             url = f"https://nsearchives.nseindia.com/content/historical/EQUITIES/{date.strftime('%Y')}/{date.strftime('%b').upper()}/cm{date.strftime('%d%b%Y').upper()}bhav.csv.zip"
     elif bhavcopy_type == "delivery":
-
         url = f"https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_{date.strftime('%d%m%Y')}.csv"
     elif bhavcopy_type == "indices":
+
         url = f"https://www1.nseindia.com/content/indices/ind_close_all_{date.strftime('%d%m%Y')}.csv"
     elif bhavcopy_type == "fno":
         url = f"https://nsearchives.nseindia.com/content/fo/BhavCopy_NSE_FO_0_0_0_{date.strftime('%Y%m%d')}_F_0000.csv.zip"
@@ -136,26 +193,29 @@ def get_bhavcopy(
         response = session.get(url, cookies=_fetch_cookies())
         response.raise_for_status()
 
+
         file_name = f"{bhavcopy_type}_bhavcopy_{date.strftime('%Y%m%d')}"
         file_path = target_directory / file_name
 
         # Save the file
         if bhavcopy_type in ["equity", "fno", "pr"]:
+
             file_path = file_path.with_suffix(".zip")
             with open(file_path, "wb") as file:
                 file.write(response.content)
 
+
             # Extract the zip file
-
             with zipfile.ZipFile(file_path, "r") as zip_ref:
-
                 zip_ref.extractall(target_directory)
                 extracted_file_name = zip_ref.namelist()[0]
+
                 extracted_file_path = target_directory / extracted_file_name
 
             # Rename the extracted file
             new_file_name = f"{bhavcopy_type}_bhavcopy_{date.strftime('%Y%m%d')}.csv"
             new_file_path = target_directory / new_file_name
+
             if extracted_file_path != new_file_path:
                 os.rename(extracted_file_path, new_file_path)
 
@@ -170,6 +230,7 @@ def get_bhavcopy(
 
             # Extract the gz file
             csv_path = (
+
                 target_directory
                 / f"{bhavcopy_type}_bhavcopy_{date.strftime('%Y%m%d')}.csv"
             )
@@ -179,49 +240,53 @@ def get_bhavcopy(
                     shutil.copyfileobj(gz_file, csv_file)
 
             # Clean up the gz file
+
             os.remove(file_path)
             return csv_path
 
+
         else:
             file_path = file_path.with_suffix(".csv")
+
             with open(file_path, "wb") as file:
+
                 file.write(response.content)
             return file_path
 
     except requests.exceptions.RequestException as e:
         raise FileNotFoundError(f"Failed to download {bhavcopy_type} bhavcopy: {e}")
-
     except (zipfile.BadZipFile, gzip.BadGzipFile) as e:
         raise RuntimeError(f"Invalid file received: {e}")
     except OSError as e:
-
         raise RuntimeError(f"File operation failed: {e}")
-
 
 def get_stock_quote(symbol: str, pretty: bool = False) -> Dict:
     """Fetch the stock quote for a specific symbol.
 
     Args:
         symbol (str): The stock symbol (e.g., "INFY", "RELIANCE").
+
         pretty (bool, optional): Whether to print the output in a prettified format. Defaults to False.
 
     Returns:
         Dict: A dictionary containing the stock quote data.
 
+
     Raises:
+
         ValueError: If the symbol is invalid or not found.
         requests.exceptions.RequestException: If the API request fails.
-
     """
     url = f"https://www.nseindia.com/api/quote-equity?symbol={symbol}"
     try:
-
         response = session.get(url, cookies=_fetch_cookies())
-        response.raise_for_status()
 
+        response.raise_for_status()
         data = response.json()
 
+
         if not data.get("info", {}).get("symbol"):
+
             raise ValueError(f"Invalid symbol: {symbol}")
 
         quote_data = {
@@ -231,6 +296,7 @@ def get_stock_quote(symbol: str, pretty: bool = False) -> Dict:
             "open": data["priceInfo"]["open"],
             "high": data["priceInfo"]["intraDayHighLow"]["max"],
             "low": data["priceInfo"]["intraDayHighLow"]["min"],
+
             "close": data["priceInfo"]["close"],
             "volume": data["preOpenMarket"]["totalTradedVolume"],
             "52_week_high": data["priceInfo"]["weekHighLow"]["max"],
@@ -244,7 +310,9 @@ def get_stock_quote(symbol: str, pretty: bool = False) -> Dict:
             table.add_column("Field", style="bold white")
             table.add_column("Value", style="bold white")
 
+
             for key, value in quote_data.items():
+
                 table.add_row(key, str(value))
 
             console.print(table)
@@ -255,25 +323,25 @@ def get_stock_quote(symbol: str, pretty: bool = False) -> Dict:
             raise ValueError(f"Invalid symbol: {symbol}")
         raise Exception(f"Failed to fetch stock quote: {e}")
     except requests.exceptions.RequestException as e:
-
         raise Exception(f"API request failed: {e}")
-
 
 def get_option_chain(symbol: str, is_index: bool = False, pretty: bool = False) -> Dict:
     """Fetch the option chain for a specific stock or index.
 
     Args:
         symbol (str): The stock or index symbol (e.g., "NIFTY", "BANKNIFTY", "RELIANCE").
+
         is_index (bool): Whether the symbol is an index. Defaults to False.
         pretty (bool, optional): Whether to print the output in a prettified format. Defaults to False.
+
 
     Returns:
         Dict: A dictionary containing the option chain data.
 
     Raises:
         ValueError: If the symbol is invalid or not found.
-
         requests.exceptions.RequestException: If the API request fails.
+
     """
     endpoint = "option-chain-indices" if is_index else "option-chain-equities"
     url = f"https://www.nseindia.com/api/{endpoint}?symbol={symbol}"
@@ -283,17 +351,16 @@ def get_option_chain(symbol: str, is_index: bool = False, pretty: bool = False) 
         data = response.json()
 
         if not data.get("records"):
-
             raise ValueError(f"Invalid symbol: {symbol}")
+
 
         if pretty:
             console = Console()
             table = Table(title=f"Option Chain for {symbol}", border_style="#555555")
+
             table.add_column("Strike Price", style="bold white")
             table.add_column("Expiry Date", style="bold white")
-
             table.add_column("Call/Put", style="bold white")
-
             table.add_column("Last Price", style="bold white")
             table.add_column("Open Interest", style="bold white")
 
@@ -303,6 +370,7 @@ def get_option_chain(symbol: str, is_index: bool = False, pretty: bool = False) 
 
                 if "CE" in record:
                     ce = record["CE"]
+
                     table.add_row(
                         str(strike_price),
                         expiry_date,
@@ -325,13 +393,13 @@ def get_option_chain(symbol: str, is_index: bool = False, pretty: bool = False) 
 
         return data
 
+
     except requests.exceptions.HTTPError as e:
         if response.status_code == 404:
             raise ValueError(f"Invalid symbol: {symbol}")
         raise Exception(f"Failed to fetch option chain: {e}")
     except requests.exceptions.RequestException as e:
         raise Exception(f"API request failed: {e}")
-
 
 def get_all_indices(pretty: bool = False) -> List[Dict]:
     """Fetch data for all NSE indices.
@@ -348,16 +416,19 @@ def get_all_indices(pretty: bool = False) -> List[Dict]:
     url = "https://www.nseindia.com/api/allIndices"
     try:
         response = session.get(url, cookies=_fetch_cookies())
+
         response.raise_for_status()
         data = response.json()
+
 
         indices = []
         for index in data.get("data", []):
             indices.append(
+
                 {
-                    "name": index.get("index"),  # Use the "index" key for the name
+                    "name": index.get("index"),
                     "last_price": index.get("last"),
-                    "change": index.get("variation"),  # Use "variation" for change
+                    "change": index.get("variation"),
                     "percent_change": index.get("percentChange"),
                     "high": index.get("high"),
                     "low": index.get("low"),
@@ -367,8 +438,8 @@ def get_all_indices(pretty: bool = False) -> List[Dict]:
             )
 
         if pretty:
-
             console = Console()
+
             table = Table(title="All Indices", border_style="#555555")
             table.add_column("Name", style="bold white")
             table.add_column("Last Price", style="bold white")
@@ -386,6 +457,7 @@ def get_all_indices(pretty: bool = False) -> List[Dict]:
                     str(index["change"]),
                     str(index["percent_change"]),
                     str(index["high"]),
+
                     str(index["low"]),
                     str(index["open"]),
                     str(index["previous_close"]),
@@ -398,6 +470,7 @@ def get_all_indices(pretty: bool = False) -> List[Dict]:
 
 
 def get_corporate_actions(
+
     segment: Literal["equities", "sme", "debt", "mf"] = "equities",
     symbol: Optional[str] = None,
     from_date: Optional[datetime] = None,
@@ -431,6 +504,7 @@ def get_corporate_actions(
             }
         )
 
+
     try:
         response = session.get(url, params=params, cookies=_fetch_cookies())
         response.raise_for_status()
@@ -438,10 +512,10 @@ def get_corporate_actions(
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch corporate actions: {e}")
 
-
 def get_announcements(
     index: Literal["equities", "sme", "debt", "mf", "invitsreits"] = "equities",
     symbol: Optional[str] = None,
+
     fno: bool = False,
     from_date: Optional[datetime] = None,
     to_date: Optional[datetime] = None,
@@ -451,31 +525,34 @@ def get_announcements(
 
     Args:
         index (str): Market segment (equities, sme, debt, mf, invitsreits). Defaults to "equities".
-
         symbol (str, optional): Stock symbol to filter results.
         fno (bool, optional): Whether to include only FnO stocks. Defaults to False.
         from_date (datetime, optional): Start date for filtering.
         to_date (datetime, optional): End date for filtering.
+
 
     Returns:
         List[Dict]: List of corporate announcements.
 
     Raises:
         ValueError: If `from_date` is greater than `to_date`.
-    """
 
+    """
     url = "https://www.nseindia.com/api/corporate-announcements"
     params = {"index": index}
+
     if symbol:
         params["symbol"] = symbol
+
     if fno:
         params["fo_sec"] = True
     if from_date and to_date:
+
         if from_date > to_date:
             raise ValueError("'from_date' cannot be greater than 'to_date'")
-
         params.update(
             {
+
                 "from_date": from_date.strftime("%d-%m-%Y"),
                 "to_date": to_date.strftime("%d-%m-%Y"),
             }
@@ -484,34 +561,40 @@ def get_announcements(
     try:
         response = session.get(url, params=params, cookies=_fetch_cookies())
         response.raise_for_status()
+
         return response.json()
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch corporate announcements: {e}")
-
 
 def get_holidays(
     holiday_type: Literal["trading", "clearing"] = "trading"
 ) -> Dict[str, List[Dict]]:
     """Fetch NSE holiday lists for trading or clearing.
+
+
     Args:
         holiday_type (Literal["trading", "clearing"]): Type of holiday list to fetch. Defaults to "trading".
 
+
     Returns:
         Dict[str, List[Dict]]: A dictionary containing holiday lists for different market segments.
+
     Raises:
         ValueError: If `holiday_type` is not "trading" or "clearing".
+
         Exception: If the API request fails.
     """
     if holiday_type not in ["trading", "clearing"]:
         raise ValueError("holiday_type must be 'trading' or 'clearing'")
+
     endpoint = "holiday-master"
     params = {"type": holiday_type}
+
     try:
         data = fetch_data_from_nse(endpoint, params=params)
         return data
     except Exception as e:
         raise Exception(f"Failed to fetch holiday information: {e}")
-
 
 def bulk_deals(from_date: datetime, to_date: datetime) -> List[Dict]:
     """Download the bulk deals report for the specified date range."""
@@ -526,11 +609,10 @@ def bulk_deals(from_date: datetime, to_date: datetime) -> List[Dict]:
         response.raise_for_status()
         data = response.json()
 
+
         if not data.get("data"):
 
-            raise RuntimeError(
-                "No bulk deals data available for the specified date range."
-            )
+            raise RuntimeError("No bulk deals data available for the specified date range.")
 
         return data["data"]
     except requests.exceptions.RequestException as e:
@@ -538,15 +620,14 @@ def bulk_deals(from_date: datetime, to_date: datetime) -> List[Dict]:
 
 def get_fii_dii_data(pretty: bool = False) -> List[Dict]:
 
-    """
-    Fetch FII (Foreign Institutional Investors) and DII (Domestic Institutional Investors) trading activity data.
+    """Fetch FII (Foreign Institutional Investors) and DII (Domestic Institutional Investors) trading activity data.
 
     Args:
         pretty (bool, optional): Whether to print the output in a prettified format. Defaults to False.
 
     Returns:
-        List[Dict]: A list of dictionaries containing FII/DII trading activity data.
 
+        List[Dict]: A list of dictionaries containing FII/DII trading activity data.
 
     Raises:
         requests.exceptions.RequestException: If the API request fails.
@@ -557,12 +638,11 @@ def get_fii_dii_data(pretty: bool = False) -> List[Dict]:
         
         if pretty:
             console = Console()
+
             table = Table(title="FII/DII Trading Activity", border_style="#555555")
             table.add_column("Category", style="bold white")
             table.add_column("Date", style="bold white")
-
             table.add_column("Buy Value (₹ Crores)", style="bold white")
-
             table.add_column("Sell Value (₹ Crores)", style="bold white")
             table.add_column("Net Value (₹ Crores)", style="bold white")
 
@@ -571,16 +651,15 @@ def get_fii_dii_data(pretty: bool = False) -> List[Dict]:
                     entry["category"],
                     entry["date"],
                     entry["buyValue"],
+
                     entry["sellValue"],
                     entry["netValue"],
-
                 )
             console.print(table)
 
         return data
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch FII/DII data: {e}")
-
 
 __version__ = "0.1.0"
 
