@@ -536,6 +536,51 @@ def bulk_deals(from_date: datetime, to_date: datetime) -> List[Dict]:
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to download bulk deals: {e}")
 
+def get_fii_dii_data(pretty: bool = False) -> List[Dict]:
+
+    """
+    Fetch FII (Foreign Institutional Investors) and DII (Domestic Institutional Investors) trading activity data.
+
+    Args:
+        pretty (bool, optional): Whether to print the output in a prettified format. Defaults to False.
+
+    Returns:
+        List[Dict]: A list of dictionaries containing FII/DII trading activity data.
+
+
+    Raises:
+        requests.exceptions.RequestException: If the API request fails.
+    """
+    endpoint = "fiidiiTradeReact"
+    try:
+        data = fetch_data_from_nse(endpoint)
+        
+        if pretty:
+            console = Console()
+            table = Table(title="FII/DII Trading Activity", border_style="#555555")
+            table.add_column("Category", style="bold white")
+            table.add_column("Date", style="bold white")
+
+            table.add_column("Buy Value (₹ Crores)", style="bold white")
+
+            table.add_column("Sell Value (₹ Crores)", style="bold white")
+            table.add_column("Net Value (₹ Crores)", style="bold white")
+
+            for entry in data:
+                table.add_row(
+                    entry["category"],
+                    entry["date"],
+                    entry["buyValue"],
+                    entry["sellValue"],
+                    entry["netValue"],
+
+                )
+            console.print(table)
+
+        return data
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to fetch FII/DII data: {e}")
+
 
 __version__ = "0.1.0"
 
@@ -549,4 +594,5 @@ __all__ = [
     "get_announcements",
     "get_holidays",
     "bulk_deals",
+    "get_fii_dii_data",
 ]

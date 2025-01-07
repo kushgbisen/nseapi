@@ -16,6 +16,7 @@ from nseapi import (
     get_all_indices,
     get_holidays,
     bulk_deals,
+    get_fii_dii_data,
 )
 
 
@@ -300,6 +301,52 @@ class TestNSEAPI(unittest.TestCase):
             bulk_deals_data, list, "Bulk deals response should be a list"
         )
 
+def test_get_fii_dii_data():
+    """Test fetching FII/DII trading activity data."""
+    with patch("nseapi.helpers.fetch_data_from_nse") as mock_fetch:
+        mock_fetch.return_value = [
+            {
+                "category": "FII/FPI *",
+                "date": "07-Jan-2025",
+                "buyValue": "11726.68",
+                "sellValue": "13218.14",
+                "netValue": "-1491.46",
+            },
+            {
+                "category": "DII **",
+                "date": "07-Jan-2025",
+                "buyValue": "12256.43",
 
+                "sellValue": "10641.15",
+                "netValue": "1615.28",
+
+            },
+        ]
+
+        data = get_fii_dii_data()
+        assert isinstance(data, list), "FII/DII data response should be a list"
+        assert "category" in data[0], "FII/DII data should contain 'category' key"
+        assert "date" in data[0], "FII/DII data should contain 'date' key"
+        assert "buyValue" in data[0], "FII/DII data should contain 'buyValue' key"
+        assert "sellValue" in data[0], "FII/DII data should contain 'sellValue' key"
+
+        assert "netValue" in data[0], "FII/DII data should contain 'netValue' key"
+
+
+def test_get_fii_dii_data_pretty():
+    """Test pretty-print for FII/DII trading activity data."""
+    with patch("nseapi.helpers.fetch_data_from_nse") as mock_fetch:
+        mock_fetch.return_value = [
+            {
+                "category": "FII/FPI *",
+                "date": "07-Jan-2025",
+                "buyValue": "11726.68",
+                "sellValue": "13218.14",
+                "netValue": "-1491.46",
+            }
+        ]
+
+        # Ensure no errors are raised when pretty=True
+        get_fii_dii_data(pretty=True)
 if __name__ == "__main__":
     unittest.main()
