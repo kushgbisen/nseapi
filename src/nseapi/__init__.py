@@ -67,7 +67,6 @@ def fetch_data_from_nse(endpoint, params=None, retries=3, delay=2, timeout=10):
     base_url = "https://www.nseindia.com/api"
     url = f"{base_url}/{endpoint}"
     headers = {
-
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/118.0"
     }
 
@@ -97,6 +96,7 @@ def fetch_data_from_nse(endpoint, params=None, retries=3, delay=2, timeout=10):
                 )
                 raise
 
+
 def get_market_status() -> Dict:
     """Fetch the current market status.
 
@@ -112,6 +112,7 @@ def get_market_status() -> Dict:
         return response.json()
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch market status: {e}")
+
 
 def get_bhavcopy(
     bhavcopy_type: Literal[
@@ -166,7 +167,6 @@ def get_bhavcopy(
         response = session.get(url, cookies=_fetch_cookies())
         response.raise_for_status()
 
-
         file_name = f"{bhavcopy_type}_bhavcopy_{date.strftime('%Y%m%d')}"
         file_path = target_directory / file_name
 
@@ -176,7 +176,6 @@ def get_bhavcopy(
             file_path = file_path.with_suffix(".zip")
             with open(file_path, "wb") as file:
                 file.write(response.content)
-
 
             # Extract the zip file
             with zipfile.ZipFile(file_path, "r") as zip_ref:
@@ -188,7 +187,6 @@ def get_bhavcopy(
             # Rename the extracted file
             new_file_name = f"{bhavcopy_type}_bhavcopy_{date.strftime('%Y%m%d')}.csv"
             new_file_path = target_directory / new_file_name
-
 
             if extracted_file_path != new_file_path:
 
@@ -203,9 +201,11 @@ def get_bhavcopy(
             with open(file_path, "wb") as file:
                 file.write(response.content)
 
-
             # Extract the gz file
-            csv_path = target_directory / f"{bhavcopy_type}_bhavcopy_{date.strftime('%Y%m%d')}.csv"
+            csv_path = (
+                target_directory
+                / f"{bhavcopy_type}_bhavcopy_{date.strftime('%Y%m%d')}.csv"
+            )
             with gzip.open(file_path, "rb") as gz_file:
                 with open(csv_path, "wb") as csv_file:
                     shutil.copyfileobj(gz_file, csv_file)
@@ -214,7 +214,6 @@ def get_bhavcopy(
 
             os.remove(file_path)
             return csv_path
-
 
         else:
             file_path = file_path.with_suffix(".csv")
@@ -231,6 +230,7 @@ def get_bhavcopy(
         raise RuntimeError(f"Invalid file received: {e}")
     except OSError as e:
         raise RuntimeError(f"File operation failed: {e}")
+
 
 def get_stock_quote(symbol: str) -> Dict:
     """Fetch the stock quote for a specific symbol.
@@ -255,7 +255,6 @@ def get_stock_quote(symbol: str) -> Dict:
         response.raise_for_status()
         data = response.json()
 
-
         if not data.get("info", {}).get("symbol"):
 
             raise ValueError(f"Invalid symbol: {symbol}")
@@ -263,7 +262,6 @@ def get_stock_quote(symbol: str) -> Dict:
         return {
             "symbol": data["info"]["symbol"],
             "company_name": data["info"]["companyName"],
-
             "current_price": data["priceInfo"]["lastPrice"],
             "open": data["priceInfo"]["open"],
             "high": data["priceInfo"]["intraDayHighLow"]["max"],
@@ -271,7 +269,6 @@ def get_stock_quote(symbol: str) -> Dict:
             "close": data["priceInfo"]["close"],
             "volume": data["preOpenMarket"]["totalTradedVolume"],
             "52_week_high": data["priceInfo"]["weekHighLow"]["max"],
-
             "52_week_low": data["priceInfo"]["weekHighLow"]["min"],
             "market_cap": data["securityInfo"].get("issuedSize", "N/A"),
         }
@@ -282,6 +279,7 @@ def get_stock_quote(symbol: str) -> Dict:
     except requests.exceptions.RequestException as e:
 
         raise Exception(f"API request failed: {e}")
+
 
 def get_option_chain(symbol: str, is_index: bool = False) -> Dict:
     """Fetch the option chain for a specific stock or index.
@@ -316,6 +314,7 @@ def get_option_chain(symbol: str, is_index: bool = False) -> Dict:
         raise Exception(f"Failed to fetch option chain: {e}")
     except requests.exceptions.RequestException as e:
         raise Exception(f"API request failed: {e}")
+
 
 def get_all_indices() -> List[Dict]:
     """Fetch data for all NSE indices.
@@ -352,9 +351,9 @@ def get_all_indices() -> List[Dict]:
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch all indices: {e}")
 
+
 def get_corporate_actions(
     segment: Literal["equities", "sme", "debt", "mf"] = "equities",
-
     symbol: Optional[str] = None,
     from_date: Optional[datetime] = None,
     to_date: Optional[datetime] = None,
@@ -385,9 +384,7 @@ def get_corporate_actions(
         params.update(
             {
                 "from_date": from_date.strftime("%d-%m-%Y"),
-
                 "to_date": to_date.strftime("%d-%m-%Y"),
-
             }
         )
 
@@ -438,9 +435,7 @@ def get_announcements(
         params.update(
             {
                 "from_date": from_date.strftime("%d-%m-%Y"),
-
                 "to_date": to_date.strftime("%d-%m-%Y"),
-
             }
         )
 
@@ -450,6 +445,7 @@ def get_announcements(
         return response.json()
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch corporate announcements: {e}")
+
 
 def get_holidays(
     holiday_type: Literal["trading", "clearing"] = "trading"
@@ -478,6 +474,7 @@ def get_holidays(
     except Exception as e:
         raise Exception(f"Failed to fetch holiday information: {e}")
 
+
 def bulk_deals(from_date: datetime, to_date: datetime) -> List[Dict]:
     """Download the bulk deals report for the specified date range."""
     if (to_date - from_date).days > 365:
@@ -485,15 +482,15 @@ def bulk_deals(from_date: datetime, to_date: datetime) -> List[Dict]:
 
     url = f"https://www.nseindia.com/api/historical/bulk-deals?from={from_date.strftime('%d-%m-%Y')}&to={to_date.strftime('%d-%m-%Y')}"
 
-
     try:
         response = session.get(url, cookies=_fetch_cookies())
         response.raise_for_status()
         data = response.json()
 
         if not data.get("data"):
-            raise RuntimeError("No bulk deals data available for the specified date range.")
-
+            raise RuntimeError(
+                "No bulk deals data available for the specified date range."
+            )
 
         return data["data"]
     except requests.exceptions.RequestException as e:
@@ -518,13 +515,60 @@ def get_fii_dii_data() -> List[Dict]:
         raise Exception(f"Failed to fetch FII/DII data: {e}")
 
 
+def get_top_gainers() -> Dict:
+    """Fetch the top gainers data from NSE.
+
+    Returns:
+        Dict: A dictionary containing the top gainers data.
+    """
+
+    endpoint = "live-analysis-variations"
+    params = {"index": "gainers"}
+    try:
+        data = fetch_data_from_nse(endpoint, params=params)
+
+        return data
+    except Exception as e:
+        raise Exception(f"Failed to fetch top gainers: {e}")
+
+
+def get_top_losers() -> Dict:
+    """Fetch the top losers data from NSE.
+
+    Returns:
+        Dict: A dictionary containing the top losers data.
+    """
+    endpoint = "live-analysis-variations"
+    params = {"index": "loosers"}
+    try:
+        data = fetch_data_from_nse(endpoint, params=params)
+        return data
+    except Exception as e:
+        raise Exception(f"Failed to fetch top losers: {e}")
+
+
+def get_regulatory_status() -> Dict:
+    """Fetch the regulatory module status from NSE.
+
+    Returns:
+        Dict: A dictionary containing the regulatory module status.
+    """
+
+    endpoint = "regulatorymodulestatus"
+    try:
+
+        data = fetch_data_from_nse(endpoint)
+        return data
+    except Exception as e:
+        raise Exception(f"Failed to fetch regulatory status: {e}")
+
+
 __version__ = "0.1.0"
 
 __all__ = [
     "get_market_status",
     "get_bhavcopy",
     "get_stock_quote",
-
     "get_option_chain",
     "get_all_indices",
     "get_corporate_actions",
@@ -532,4 +576,7 @@ __all__ = [
     "get_holidays",
     "bulk_deals",
     "get_fii_dii_data",
+    "get_top_gainers",
+    "get_top_losers",
+    "get_regulatory_status",
 ]
