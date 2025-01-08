@@ -6,7 +6,6 @@ NSEAPI is a Python package designed for seamless interaction with the National S
 
 ## Table of Contents
 
-
 - [Installation](#installation)
 - [Usage](#usage)
   - [Fetching Market Status](#fetching-market-status)
@@ -26,6 +25,7 @@ NSEAPI is a Python package designed for seamless interaction with the National S
   - [Fetching Most Active Securities](#fetching-most-active-securities)
   - [Fetching Volume Gainers](#fetching-volume-gainers)
   - [Fetching Price Band Hitters](#fetching-price-band-hitters)
+  - [Fetching 52-Week High and Low Data](#fetching-52-week-high-and-low-data)
   - [Logging](#logging)
 - [Troubleshooting](#troubleshooting)
 
@@ -79,7 +79,6 @@ print("Market Status:", market_status)
 
 The `get_bhavcopy` function downloads various types of bhavcopy reports (e.g., equity, delivery, indices, FnO, priceband, PR, CM MII) for a specific date. The file is saved in the specified directory.
 
-
 ```python
 from nseapi import get_bhavcopy
 from datetime import datetime
@@ -105,17 +104,17 @@ The `get_stock_quote` function fetches the stock quote for a specific symbol, in
 ```python
 from nseapi import get_stock_quote
 
-
 symbol = "INFY"
+
 
 quote = get_stock_quote(symbol)
 print("Stock Quote:", quote)
 ```
 
+
 ---
 
 ### Retrieving Option Chain Data
-
 
 The `get_option_chain` function retrieves the option chain data for a specific stock or index. This includes details about call and put options, strike prices, and open interest.
 
@@ -123,9 +122,7 @@ The `get_option_chain` function retrieves the option chain data for a specific s
 from nseapi import get_option_chain
 
 # For a stock
-
 symbol = "RELIANCE"
-
 option_chain = get_option_chain(symbol)
 print("Option Chain for RELIANCE:", option_chain)
 
@@ -137,27 +134,23 @@ print("Option Chain for NIFTY:", option_chain)
 
 ---
 
-
 ### Fetching Corporate Actions
+
 
 The `get_corporate_actions` function fetches forthcoming corporate actions (e.g., dividends, stock splits) for a specific segment or symbol. You can filter the results by date range.
 
 ```python
 from nseapi import get_corporate_actions
-
 from datetime import datetime
-
 
 # Fetch corporate actions for equities
 actions = get_corporate_actions(segment="equities")
 print("Corporate Actions:", actions)
 
-
 # Fetch corporate actions for a specific symbol and date range
 from_date = datetime(2023, 1, 1)
 to_date = datetime(2023, 12, 31)
 actions = get_corporate_actions(
-
     segment="equities",
     symbol="HDFCBANK",
     from_date=from_date,
@@ -168,9 +161,7 @@ print("Filtered Corporate Actions:", actions)
 
 ---
 
-
 ### Fetching Corporate Announcements
-
 
 The `get_announcements` function fetches corporate announcements for a specific segment or symbol. You can filter the results by date range and include only FnO stocks.
 
@@ -178,12 +169,14 @@ The `get_announcements` function fetches corporate announcements for a specific 
 from nseapi import get_announcements
 from datetime import datetime
 
+
 # Fetch corporate announcements for equities
 announcements = get_announcements(index="equities")
 print("Corporate Announcements:", announcements)
 
 # Fetch corporate announcements for a specific symbol and date range
 from_date = datetime(2023, 1, 1)
+
 to_date = datetime(2023, 12, 31)
 announcements = get_announcements(
     index="equities",
@@ -192,12 +185,12 @@ announcements = get_announcements(
     to_date=to_date
 )
 print("Filtered Corporate Announcements:", announcements)
+
 ```
 
 ---
 
 ### Fetching All Indices
-
 
 The `get_all_indices` function fetches data for all NSE indices, including the last price, change, and percentage change.
 
@@ -206,22 +199,22 @@ The `get_all_indices` function fetches data for all NSE indices, including the l
 from nseapi import get_all_indices
 
 indices = get_all_indices()
-
 print("All Indices:", indices)
-
 ```
 
 ---
 
 ### Fetching All Indices Performance
 
-
 The `get_all_indices_performance` function fetches performance data for all NSE indices, including the last price, percentage change, advances, declines, and historical data points.
+
 
 ```python
 from nseapi import get_all_indices_performance
 
+
 # Fetch performance data for all indices
+
 indices_performance = get_all_indices_performance()
 print("All Indices Performance:", indices_performance)
 ```
@@ -256,14 +249,17 @@ print("Clearing Holidays:", clearing_holidays)
 
 ---
 
+
 ### Fetching Bulk Deals
 
 
 The `bulk_deals` function fetches bulk deals data for a specified date range.
 
+
 ```python
 from nseapi import bulk_deals
 from datetime import datetime
+
 
 from_date = datetime(2023, 1, 1)
 to_date = datetime(2023, 12, 31)
@@ -271,9 +267,11 @@ bulk_deals_data = bulk_deals(from_date, to_date)
 print("Bulk Deals:", bulk_deals_data)
 ```
 
+
 ---
 
 ### Fetching FII/DII Trading Activity
+
 
 The `get_fii_dii_data` function fetches trading activity data for Foreign Institutional Investors (FII) and Domestic Institutional Investors (DII).
 
@@ -281,11 +279,10 @@ The `get_fii_dii_data` function fetches trading activity data for Foreign Instit
 from nseapi import get_fii_dii_data
 
 # Fetch FII/DII trading activity
-fii_dii_data = get_fii_dii_data()
 
+fii_dii_data = get_fii_dii_data()
 print("FII/DII Trading Activity:", fii_dii_data)
 ```
-
 
 ---
 
@@ -295,6 +292,7 @@ print("FII/DII Trading Activity:", fii_dii_data)
 The `get_top_gainers` function fetches the top gainers data from NSE.
 
 ```python
+
 from nseapi import get_top_gainers
 
 # Fetch top gainers
@@ -314,11 +312,11 @@ from nseapi import get_top_losers
 
 # Fetch top losers
 top_losers = get_top_losers()
-
 print("Top Losers:", top_losers)
 ```
 
 ---
+
 
 ### Fetching Regulatory Module Status
 
@@ -331,6 +329,7 @@ from nseapi import get_regulatory_status
 regulatory_status = get_regulatory_status()
 print("Regulatory Status:", regulatory_status)
 ```
+
 
 ---
 
@@ -346,6 +345,7 @@ from nseapi import (
 )
 
 # Fetch most active equities by volume
+
 most_active_equities_volume = get_most_active_equities("volume")
 print("Most Active Equities by Volume:", most_active_equities_volume)
 
@@ -353,10 +353,9 @@ print("Most Active Equities by Volume:", most_active_equities_volume)
 most_active_equities_value = get_most_active_equities("value")
 print("Most Active Equities by Value:", most_active_equities_value)
 
-
 # Fetch most active SMEs by volume
-most_active_sme_volume = get_most_active_sme("volume")
 
+most_active_sme_volume = get_most_active_sme("volume")
 print("Most Active SMEs by Volume:", most_active_sme_volume)
 
 
@@ -367,20 +366,20 @@ print("Most Active SMEs by Value:", most_active_sme_value)
 
 # Fetch most active ETFs by volume
 most_active_etf_volume = get_most_active_etf("volume")
+
 print("Most Active ETFs by Volume:", most_active_etf_volume)
+
 
 # Fetch most active ETFs by value
 most_active_etf_value = get_most_active_etf("value")
 print("Most Active ETFs by Value:", most_active_etf_value)
 ```
 
-
 ---
 
 ### Fetching Volume Gainers
 
 The `get_volume_gainers` function fetches the list of securities with the highest volume gain compared to their average volume.
-
 
 ```python
 from nseapi import get_volume_gainers
@@ -395,6 +394,7 @@ print("Volume Gainers:", volume_gainers)
 
 ### Fetching Price Band Hitters
 
+
 The `get_price_band_hitters` function fetches stocks that have hit their upper, lower, or both price bands. You can specify the type of price band (`upper`, `lower`, or `both`) and the category of securities (`AllSec`, `SecGtr20`, or `SecLwr20`).
 
 
@@ -405,10 +405,11 @@ from nseapi import get_price_band_hitters
 upper_hitters = get_price_band_hitters(band_type="upper", category="AllSec")
 print("Upper Price Band Hitters:", upper_hitters)
 
-
 # Fetch lower price band hitters for securities with price band < 20%
 lower_hitters = get_price_band_hitters(band_type="lower", category="SecLwr20")
+
 print("Lower Price Band Hitters (SecLwr20):", lower_hitters)
+
 
 # Fetch counts for stocks hitting both upper and lower price bands
 both_hitters = get_price_band_hitters(band_type="both")
@@ -416,6 +417,42 @@ print("Both Price Band Hitters:", both_hitters)
 ```
 
 ---
+
+
+### Fetching 52-Week High and Low Data
+
+The `get_52_week_high` and `get_52_week_low` functions fetch the list of stocks hitting 52-week highs and lows, respectively. The response includes the stock symbol, last traded price, percentage change, and other relevant details.
+
+```python
+from nseapi import get_52_week_high, get_52_week_low, get_52_week_counts
+
+# Fetch 52-week high data
+high_data = get_52_week_high()
+print("52-Week High Data:", high_data["data"])
+print("Timestamp:", high_data["timestamp"])
+
+# Fetch 52-week low data
+low_data = get_52_week_low()
+print("52-Week Low Data:", low_data["data"])
+print("Timestamp:", low_data["timestamp"])
+
+# Fetch counts of stocks hitting 52-week highs and lows
+
+counts = get_52_week_counts()
+print("52-Week High Count:", counts["high"])
+print("52-Week Low Count:", counts["low"])
+```
+
+The response for `get_52_week_high` and `get_52_week_low` includes:
+- **data**: List of stocks with details like symbol, last traded price, percentage change, etc.
+- **timestamp**: Timestamp of the data.
+
+The response for `get_52_week_counts` includes:
+- **high**: Number of stocks hitting 52-week highs.
+- **low**: Number of stocks hitting 52-week lows.
+
+---
+
 
 ### Logging
 
@@ -430,12 +467,12 @@ Logs are written to `nseapi.log` in the current working directory. Example log o
 ```
 2024-12-27 06:53:03 - INFO - Successfully fetched data from marketStatus
 2024-12-27 06:53:04 - ERROR - Failed to fetch data from invalid_endpoint: 404 Client Error
-
 ```
 
 ---
 
 ## Troubleshooting
+
 
 ### Common Issues
 
@@ -450,7 +487,6 @@ Logs are written to `nseapi.log` in the current working directory. Example log o
 
 The project is organized as follows:
 
-
 ```
 ./
 ├── .gitignore                # Specifies files and directories to ignore in Git
@@ -460,17 +496,15 @@ The project is organized as follows:
 ├── requirements.txt          # Lists project dependencies
 ├── setup.py                  # Package setup configuration
 ├── src/                      # Source code directory
-
 │   └── nseapi/               # Main package directory
 │       ├── __init__.py       # Package initialization file
 └── tests/                    # Unit tests directory
-
     └── test_nseapi.py        # Tests for market-related functions
-
 ```
 
 ---
 
 ## License
+
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.

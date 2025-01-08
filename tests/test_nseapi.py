@@ -34,6 +34,9 @@ from nseapi import (
     get_volume_gainers,
     get_all_indices_performance,
     get_price_band_hitters,
+    get_52_week_high,
+    get_52_week_low,
+    get_52_week_counts,
 )
 
 
@@ -638,7 +641,6 @@ class TestNSEAPI(unittest.TestCase):
                 {
                     "key": "BROAD MARKET INDICES",
                     "index": "NIFTY 50",
-
                     "indexSymbol": "NIFTY 50",
                     "last": 23688.95,
                     "variation": -18.95,
@@ -663,26 +665,20 @@ class TestNSEAPI(unittest.TestCase):
                     "perChange30d": -4.01,
                     "chart30dPath": "https://nsearchives.nseindia.com/30d/NIFTY-50.svg",
                     "chartTodayPath": "https://nsearchives.nseindia.com/today/NIFTY-50.svg",
-
                     "previousDay": 23616.05,
                     "oneWeekAgo": 23742.9,
                     "oneMonthAgo": 24677.8,
-
                     "oneYearAgo": 21513,
-
                 }
             ],
             "timestamp": "08-Jan-2025 15:30",
             "advances": 2215,
-
             "declines": 5649,
             "unchanged": 71,
             "dates": {
                 "previousDay": "06-Jan-2025",
                 "oneWeekAgo": "01-Jan-2025",
-
                 "oneMonthAgo": "06-Dec-2024",
-
                 "oneYearAgo": "08-Jan-2024",
             },
             "date30dAgo": "06-Dec-2024",
@@ -692,7 +688,6 @@ class TestNSEAPI(unittest.TestCase):
         with patch("nseapi.fetch_data_from_nse", return_value=mock_response):
 
             data = get_all_indices_performance()
-
 
             self.assertIsInstance(data, dict, "Response should be a dictionary")
             self.assertIn("data", data, "Response should contain 'data' key")
@@ -708,7 +703,6 @@ class TestNSEAPI(unittest.TestCase):
                     "data": [
                         {
                             "symbol": "SPANDANA",
-
                             "series": "EQ",
                             "ltp": "479.35",
                             "change": "78.9",
@@ -724,10 +718,14 @@ class TestNSEAPI(unittest.TestCase):
                     ],
                     "timestamp": "08-Jan-2025 16:00:24",
                     "indetifier": "upperAllSec",
-                    "count": {"TOTAL": "171", "LOWER": "70", "UPPER": "88", "BOTH": "13"},
+                    "count": {
+                        "TOTAL": "171",
+                        "LOWER": "70",
+                        "UPPER": "88",
+                        "BOTH": "13",
+                    },
                 }
             }
-
         }
         mock_fetch.return_value = mock_response
 
@@ -737,7 +735,6 @@ class TestNSEAPI(unittest.TestCase):
 
         self.assertIn("timestamp", result)
         self.assertIn("count", result)
-
 
     @patch("nseapi.fetch_data_from_nse")
     def test_get_price_band_hitters_lower_sec_lwr20(self, mock_fetch):
@@ -764,10 +761,14 @@ class TestNSEAPI(unittest.TestCase):
                     ],
                     "timestamp": "08-Jan-2025 16:00:24",
                     "indetifier": "lowerSecLwr20",
-                    "count": {"LOWER": "70", "BOTH": "13", "UPPER": "88", "TOTAL": "171"},
+                    "count": {
+                        "LOWER": "70",
+                        "BOTH": "13",
+                        "UPPER": "88",
+                        "TOTAL": "171",
+                    },
                 }
             }
-
         }
         mock_fetch.return_value = mock_response
 
@@ -778,7 +779,6 @@ class TestNSEAPI(unittest.TestCase):
         self.assertIn("count", result)
 
     @patch("nseapi.fetch_data_from_nse")
-
     def test_get_price_band_hitters_both(self, mock_fetch):
         """Test fetching counts for stocks hitting both upper and lower price bands."""
 
@@ -786,7 +786,6 @@ class TestNSEAPI(unittest.TestCase):
             "count": {"UPPER": "88", "LOWER": "70", "BOTH": "13", "TOTAL": "171"}
         }
         mock_fetch.return_value = mock_response
-
 
         result = get_price_band_hitters(band_type="both")
         self.assertIsInstance(result, dict)
@@ -801,7 +800,9 @@ class TestNSEAPI(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             get_price_band_hitters(band_type="invalid")
 
-        self.assertIn("band_type must be 'upper', 'lower', or 'both'", str(context.exception))
+        self.assertIn(
+            "band_type must be 'upper', 'lower', or 'both'", str(context.exception)
+        )
 
     def test_get_price_band_hitters_invalid_category(self):
         """Test invalid category."""
@@ -809,7 +810,80 @@ class TestNSEAPI(unittest.TestCase):
 
             get_price_band_hitters(category="invalid")
 
-        self.assertIn("category must be 'AllSec', 'SecGtr20', or 'SecLwr20'", str(context.exception))
+        self.assertIn(
+            "category must be 'AllSec', 'SecGtr20', or 'SecLwr20'",
+            str(context.exception),
+        )
+
+    def test_get_52_week_high(self):
+        """Test fetching 52-week high data."""
+        mock_response = {
+            "data": [
+                {
+                    "symbol": "AARTECH",
+                    "series": "EQ",
+                    "comapnyName": "Aartech Solonics Limited",
+                    "new52WHL": 105.39,
+                    "prev52WHL": 100.38,
+                    "prevHLDate": "07-Jan-2025",
+                    "ltp": 95.36,
+                    "prevClose": "100.38",
+                    "change": -5.02,
+                    "pChange": -5.000996214385336,
+                }
+            ],
+            "timestamp": "08-Jan-2025 16:00:24",
+        }
+
+        with patch("nseapi.fetch_data_from_nse", return_value=mock_response):
+
+            result = get_52_week_high()
+            self.assertIsInstance(result, dict)
+            self.assertIn("data", result)
+            self.assertIn("timestamp", result)
+            self.assertEqual(len(result["data"]), 1)
+            self.assertEqual(result["data"][0]["symbol"], "AARTECH")
+
+    def test_get_52_week_low(self):
+        """Test fetching 52-week low data."""
+
+        mock_response = {
+            "data": [
+                {
+                    "symbol": "AARTECH",
+                    "series": "EQ",
+                    "comapnyName": "Aartech Solonics Limited",
+                    "new52WHL": 105.39,
+                    "prev52WHL": 100.38,
+                    "prevHLDate": "07-Jan-2025",
+                    "ltp": 95.36,
+                    "prevClose": "100.38",
+                    "change": -5.02,
+                    "pChange": -5.000996214385336,
+                }
+            ],
+            "timestamp": "08-Jan-2025 16:00:24",
+        }
+
+        with patch("nseapi.fetch_data_from_nse", return_value=mock_response):
+            result = get_52_week_low()
+            self.assertIsInstance(result, dict)
+            self.assertIn("data", result)
+            self.assertIn("timestamp", result)
+            self.assertEqual(len(result["data"]), 1)
+            self.assertEqual(result["data"][0]["symbol"], "AARTECH")
+
+    def test_get_52_week_counts(self):
+        """Test fetching 52-week high and low counts."""
+        mock_response = {"high": 54, "low": 73}
+
+        with patch("nseapi.fetch_data_from_nse", return_value=mock_response):
+            result = get_52_week_counts()
+            self.assertIsInstance(result, dict)
+            self.assertIn("high", result)
+            self.assertIn("low", result)
+            self.assertEqual(result["high"], 54)
+            self.assertEqual(result["low"], 73)
 
 
 if __name__ == "__main__":

@@ -676,6 +676,7 @@ def get_all_indices_performance() -> Dict:
     endpoint = "allIndices"
     return fetch_data_from_nse(endpoint)
 
+
 def get_price_band_hitters(
     band_type: Literal["upper", "lower", "both"] = "upper",
     category: Literal["AllSec", "SecGtr20", "SecLwr20"] = "AllSec",
@@ -715,6 +716,57 @@ def get_price_band_hitters(
         raise
 
 
+def get_52_week_high() -> Dict[str, List[Dict]]:
+    """
+    Fetch the list of stocks hitting 52-week highs.
+
+    Returns:
+        Dict[str, List[Dict]]: A dictionary containing:
+            - "data": List of stocks hitting 52-week highs.
+
+            - "timestamp": Timestamp of the data.
+
+    """
+    endpoint = "live-analysis-data-52weekhighstock"
+    response = fetch_data_from_nse(endpoint)
+    return {
+        "data": response.get("data", []),
+        "timestamp": response.get("timestamp", "N/A"),
+    }
+
+
+def get_52_week_low() -> Dict[str, List[Dict]]:
+    """
+    Fetch the list of stocks hitting 52-week lows.
+
+
+    Returns:
+        Dict[str, List[Dict]]: A dictionary containing:
+            - "data": List of stocks hitting 52-week lows.
+            - "timestamp": Timestamp of the data.
+    """
+    endpoint = "live-analysis-data-52weeklowstock"
+    response = fetch_data_from_nse(endpoint)
+    return {
+        "data": response.get("data", []),
+        "timestamp": response.get("timestamp", "N/A"),
+    }
+
+def get_52_week_counts() -> Dict[str, int]:
+    """
+    Fetch the counts of stocks hitting 52-week highs and lows.
+
+    Returns:
+        Dict[str, int]: A dictionary containing:
+            - "high": Number of stocks hitting 52-week highs.
+            - "low": Number of stocks hitting 52-week lows.
+    """
+    endpoint = "live-analysis-52weekhighstock"
+    response = fetch_data_from_nse(endpoint)
+    return {
+        "high": response.get("high", 0),
+        "low": response.get("low", 0)
+    }
 __version__ = "0.1.0"
 __all__ = [
     "get_market_status",
@@ -736,4 +788,7 @@ __all__ = [
     "get_volume_gainers",
     "get_all_indices_performance",
     "get_price_band_hitters",
+    "get_52_week_high",
+    "get_52_week_low",
+    "get_52_week_counts",
 ]
