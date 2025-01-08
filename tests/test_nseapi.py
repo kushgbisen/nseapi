@@ -33,6 +33,7 @@ from nseapi import (
     get_most_active_etf,
     get_volume_gainers,
     get_all_indices_performance,
+    get_price_band_hitters,
 )
 
 
@@ -696,6 +697,120 @@ class TestNSEAPI(unittest.TestCase):
             self.assertIsInstance(data, dict, "Response should be a dictionary")
             self.assertIn("data", data, "Response should contain 'data' key")
             self.assertIn("timestamp", data, "Response should contain 'timestamp' key")
+
+    @patch("nseapi.fetch_data_from_nse")
+    def test_get_price_band_hitters_upper_all_sec(self, mock_fetch):
+        """Test fetching upper price band hitters for all securities."""
+
+        mock_response = {
+            "upper": {
+                "AllSec": {
+                    "data": [
+                        {
+                            "symbol": "SPANDANA",
+
+                            "series": "EQ",
+                            "ltp": "479.35",
+                            "change": "78.9",
+                            "pChange": "19.70",
+                            "priceBand": "20",
+                            "highPrice": 480.5,
+                            "lowPrice": 401.25,
+                            "yearHigh": 1243.2,
+                            "yearLow": 305.2,
+                            "totalTradedVol": 141.15286,
+                            "turnover": 646.19779308,
+                        }
+                    ],
+                    "timestamp": "08-Jan-2025 16:00:24",
+                    "indetifier": "upperAllSec",
+                    "count": {"TOTAL": "171", "LOWER": "70", "UPPER": "88", "BOTH": "13"},
+                }
+            }
+
+        }
+        mock_fetch.return_value = mock_response
+
+        result = get_price_band_hitters(band_type="upper", category="AllSec")
+        self.assertIsInstance(result, dict)
+        self.assertIn("data", result)
+
+        self.assertIn("timestamp", result)
+        self.assertIn("count", result)
+
+
+    @patch("nseapi.fetch_data_from_nse")
+    def test_get_price_band_hitters_lower_sec_lwr20(self, mock_fetch):
+        """Test fetching lower price band hitters for securities with price band < 20%."""
+
+        mock_response = {
+            "lower": {
+                "SecLwr20": {
+                    "data": [
+                        {
+                            "symbol": "ZEELEARN",
+                            "series": "EQ",
+                            "ltp": "8.48",
+                            "change": "0.77",
+                            "pChange": "9.99",
+                            "priceBand": "10",
+                            "highPrice": 8.48,
+                            "lowPrice": 7.56,
+                            "yearHigh": 11.48,
+                            "yearLow": 5.6,
+                            "totalTradedVol": 24.13813,
+                            "turnover": 2.0034647899999998,
+                        }
+                    ],
+                    "timestamp": "08-Jan-2025 16:00:24",
+                    "indetifier": "lowerSecLwr20",
+                    "count": {"LOWER": "70", "BOTH": "13", "UPPER": "88", "TOTAL": "171"},
+                }
+            }
+
+        }
+        mock_fetch.return_value = mock_response
+
+        result = get_price_band_hitters(band_type="lower", category="SecLwr20")
+        self.assertIsInstance(result, dict)
+        self.assertIn("data", result)
+        self.assertIn("timestamp", result)
+        self.assertIn("count", result)
+
+    @patch("nseapi.fetch_data_from_nse")
+
+    def test_get_price_band_hitters_both(self, mock_fetch):
+        """Test fetching counts for stocks hitting both upper and lower price bands."""
+
+        mock_response = {
+            "count": {"UPPER": "88", "LOWER": "70", "BOTH": "13", "TOTAL": "171"}
+        }
+        mock_fetch.return_value = mock_response
+
+
+        result = get_price_band_hitters(band_type="both")
+        self.assertIsInstance(result, dict)
+        self.assertIn("UPPER", result)
+        self.assertIn("LOWER", result)
+        self.assertIn("BOTH", result)
+
+        self.assertIn("TOTAL", result)
+
+    def test_get_price_band_hitters_invalid_band_type(self):
+        """Test invalid band_type."""
+        with self.assertRaises(ValueError) as context:
+            get_price_band_hitters(band_type="invalid")
+
+        self.assertIn("band_type must be 'upper', 'lower', or 'both'", str(context.exception))
+
+    def test_get_price_band_hitters_invalid_category(self):
+        """Test invalid category."""
+        with self.assertRaises(ValueError) as context:
+
+            get_price_band_hitters(category="invalid")
+
+        self.assertIn("category must be 'AllSec', 'SecGtr20', or 'SecLwr20'", str(context.exception))
+
 
 if __name__ == "__main__":
 

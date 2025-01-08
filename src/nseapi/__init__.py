@@ -676,6 +676,44 @@ def get_all_indices_performance() -> Dict:
     endpoint = "allIndices"
     return fetch_data_from_nse(endpoint)
 
+def get_price_band_hitters(
+    band_type: Literal["upper", "lower", "both"] = "upper",
+    category: Literal["AllSec", "SecGtr20", "SecLwr20"] = "AllSec",
+) -> Dict:
+    """
+    Fetch stocks that have hit their upper, lower, or both price bands.
+
+
+    Args:
+        band_type (Literal["upper", "lower", "both"]): Type of price band to fetch (upper, lower, or both).
+        category (Literal["AllSec", "SecGtr20", "SecLwr20"]): Category of securities to fetch.
+
+    Returns:
+        Dict: A dictionary containing the price band hitters data.
+
+
+    Raises:
+        ValueError: If the band_type or category is invalid.
+        requests.exceptions.RequestException: If the API request fails.
+
+    """
+    if band_type not in ["upper", "lower", "both"]:
+        raise ValueError("band_type must be 'upper', 'lower', or 'both'")
+    if category not in ["AllSec", "SecGtr20", "SecLwr20"]:
+
+        raise ValueError("category must be 'AllSec', 'SecGtr20', or 'SecLwr20'")
+
+    endpoint = "live-analysis-price-band-hitter"
+    try:
+        data = fetch_data_from_nse(endpoint)
+        if band_type == "both":
+            return data["count"]  # Return counts for both upper and lower bands
+        return data[band_type][category]
+
+    except Exception as e:
+        logger.error(f"Failed to fetch price band hitters: {e}")
+        raise
+
 
 __version__ = "0.1.0"
 __all__ = [
@@ -697,4 +735,5 @@ __all__ = [
     "get_most_active_etf",
     "get_volume_gainers",
     "get_all_indices_performance",
+    "get_price_band_hitters",
 ]
