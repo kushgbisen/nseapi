@@ -752,6 +752,7 @@ def get_52_week_low() -> Dict[str, List[Dict]]:
         "timestamp": response.get("timestamp", "N/A"),
     }
 
+
 def get_52_week_counts() -> Dict[str, int]:
     """
     Fetch the counts of stocks hitting 52-week highs and lows.
@@ -763,10 +764,8 @@ def get_52_week_counts() -> Dict[str, int]:
     """
     endpoint = "live-analysis-52weekhighstock"
     response = fetch_data_from_nse(endpoint)
-    return {
-        "high": response.get("high", 0),
-        "low": response.get("low", 0)
-    }
+    return {"high": response.get("high", 0), "low": response.get("low", 0)}
+
 
 def get_52_week_data_by_symbol(symbol: str) -> List[Dict]:
     """
@@ -799,6 +798,79 @@ def get_52_week_data_by_symbol(symbol: str) -> List[Dict]:
     except requests.exceptions.RequestException as e:
         raise Exception(f"API request failed: {e}")
 
+
+def get_large_deals() -> Dict:
+    """
+    Fetch bulk deals, short deals, and block deals data from NSE.
+
+    Returns:
+        Dict: A dictionary containing bulk deals, short deals, and block deals data.
+              Example:
+              {
+                  "as_on_date": "08-Jan-2025",
+                  "bulk_deals": [
+                      {
+                          "symbol": "AARTECH",
+                          "name": "Aartech Solonics Limited",
+                          "client_name": "KABRA  PRIYA",
+                          "buy_sell": "BUY",
+                          "quantity": 688214,
+                          "watp": 98.76
+                      },
+                      ...
+                  ],
+                  "short_deals": [
+                      {
+                          "symbol": "LICI",
+
+                          "name": "LIFE INSURA CORP OF INDIA",
+                          "quantity": 27600,
+                          "watp": null
+                      },
+                      ...
+                  ],
+
+                  "block_deals": [
+                      {
+                          "symbol": "WANBURY",
+                          "name": "Wanbury Limited",
+                          "client_name": "BHATIA SURESH",
+                          "buy_sell": "SELL",
+                          "quantity": 352421,
+                          "watp": 283.78
+
+                      },
+                      ...
+
+                  ],
+                  "total_bulk_deals": 78,
+
+                  "total_short_deals": 16,
+                  "total_block_deals": 2
+              }
+
+
+    Raises:
+
+        requests.exceptions.RequestException: If the API request fails.
+    """
+    endpoint = "snapshot-capital-market-largedeal"
+    try:
+        data = fetch_data_from_nse(endpoint)
+        return {
+            "as_on_date": data.get("as_on_date"),
+            "bulk_deals": data.get("BULK_DEALS_DATA", []),
+            "short_deals": data.get("SHORT_DEALS_DATA", []),
+            "block_deals": data.get("BLOCK_DEALS_DATA", []),
+            "total_bulk_deals": data.get("BULK_DEALS", 0),
+            "total_short_deals": data.get("SHORT_DEALS", 0),
+            "total_block_deals": data.get("BLOCK_DEALS", 0),
+        }
+    except requests.exceptions.RequestException as e:
+
+        raise Exception(f"Failed to fetch large deals data: {e}")
+
+
 __version__ = "0.1.0"
 __all__ = [
     "get_market_status",
@@ -824,4 +896,5 @@ __all__ = [
     "get_52_week_low",
     "get_52_week_data_by_symbol",
     "get_52_week_counts",
+    "get_large_deals",
 ]
