@@ -8,31 +8,34 @@ import zipfile
 import shutil
 from pathlib import Path
 
+
 import logging
 import pytest
 from nseapi import (
     get_market_status,
     get_bhavcopy,
     get_corporate_actions,
-
     get_announcements,
     get_stock_quote,
     get_option_chain,
+
     get_all_indices,
     get_holidays,
     bulk_deals,
     get_fii_dii_data,
     fetch_data_from_nse,
     logger,
+
     session,
 )
 
 
 class TestNSEAPI(unittest.TestCase):
 
-    def setUp(self):
 
+    def setUp(self):
         """Set up test fixtures before each test method."""
+
         self.test_dir = os.path.join(os.getcwd(), "test_downloads")
         if not os.path.exists(self.test_dir):
             os.makedirs(self.test_dir)
@@ -43,7 +46,6 @@ class TestNSEAPI(unittest.TestCase):
             for file in os.listdir(self.test_dir):
                 os.remove(os.path.join(self.test_dir, file))
             os.rmdir(self.test_dir)
-
 
     def test_get_market_status(self):
         """Test market status retrieval."""
@@ -70,19 +72,21 @@ class TestNSEAPI(unittest.TestCase):
         date = datetime(2023, 12, 26)
         file_path = get_bhavcopy("indices", date, download_dir=self.test_dir)
         self.assertTrue(os.path.exists(file_path), f"Indices bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}")
-
         self.assertGreater(os.path.getsize(file_path), 0, "Downloaded indices bhavcopy file is empty")
+
 
     def test_get_bhavcopy_fno(self):
         """Test FnO bhavcopy download."""
         date = datetime(2024, 12, 26)
         file_path = get_bhavcopy("fno", date, download_dir=self.test_dir)
+
         self.assertTrue(os.path.exists(file_path), f"FnO bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}")
         self.assertGreater(os.path.getsize(file_path), 0, "Downloaded FnO bhavcopy file is empty")
 
     def test_get_bhavcopy_priceband(self):
         """Test priceband report download."""
         date = datetime(2023, 12, 26)
+
         file_path = get_bhavcopy("priceband", date, download_dir=self.test_dir)
         self.assertTrue(os.path.exists(file_path), f"Priceband report file for {date.strftime('%Y-%m-%d')} not found at {file_path}")
         self.assertGreater(os.path.getsize(file_path), 0, "Downloaded priceband report file is empty")
@@ -90,24 +94,24 @@ class TestNSEAPI(unittest.TestCase):
 
     def test_get_bhavcopy_pr(self):
         """Test PR bhavcopy download."""
-
         date = datetime(2023, 12, 26)
         file_path = get_bhavcopy("pr", date, download_dir=self.test_dir)
+
         self.assertTrue(os.path.exists(file_path), f"PR bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}")
+
         self.assertGreater(os.path.getsize(file_path), 0, "Downloaded PR bhavcopy file is empty")
 
     def test_get_bhavcopy_cm_mii(self):
-
         """Test CM MII security report download."""
         date = datetime(2025, 1, 2)
         file_path = get_bhavcopy("cm_mii", date, download_dir=self.test_dir)
         self.assertTrue(os.path.exists(file_path), f"CM MII security report file for {date.strftime('%Y-%m-%d')} not found at {file_path}")
-
         self.assertGreater(os.path.getsize(file_path), 0, "Downloaded CM MII security report file is empty")
 
 
     def test_get_bhavcopy_invalid_type(self):
         """Test get_bhavcopy with invalid bhavcopy type."""
+
         date = datetime(2023, 12, 26)
         with self.assertRaises(ValueError) as context:
             get_bhavcopy("invalid_type", date, download_dir=self.test_dir)
@@ -121,9 +125,7 @@ class TestNSEAPI(unittest.TestCase):
         if actions:  # Check structure if data is returned
             self.assertIn("symbol", actions[0], "Corporate action should contain 'symbol' key")
 
-
     def test_get_corporate_actions_with_filter(self):
-
         """Test fetching corporate actions with symbol and date range."""
         from_date = datetime(2023, 1, 1)
         to_date = datetime(2023, 12, 31)
@@ -132,15 +134,15 @@ class TestNSEAPI(unittest.TestCase):
 
     def test_get_announcements(self):
         """Test fetching corporate announcements."""
-        announcements = get_announcements(index="equities")
 
+        announcements = get_announcements(index="equities")
         self.assertIsInstance(announcements, list, "Announcements response should be a list")
         if announcements:  # Check structure if data is returned
+
             self.assertIn("symbol", announcements[0], "Announcement should contain 'symbol' key")
 
     def test_get_announcements_with_filter(self):
         """Test fetching corporate announcements with symbol and date range."""
-
         from_date = datetime(2023, 1, 1)
         to_date = datetime(2023, 12, 31)
         announcements = get_announcements(index="equities", symbol="HDFCBANK", from_date=from_date, to_date=to_date)
@@ -155,18 +157,18 @@ class TestNSEAPI(unittest.TestCase):
         self.assertIn("symbol", quote, "Stock quote should contain 'symbol' key")
         self.assertEqual(quote["symbol"], symbol, "Symbol in response should match the requested symbol")
 
+
     def test_get_stock_quote_invalid_symbol(self):
         """Test fetching stock quote for an invalid symbol."""
         with self.assertRaises(ValueError) as context:
             get_stock_quote("INVALID_SYMBOL")
+
         self.assertIn("Invalid symbol", str(context.exception))
 
     def test_get_option_chain_index(self):
         """Test fetching option chain for an index."""
         symbol = "NIFTY"
-
         option_chain = get_option_chain(symbol, is_index=True)
-
         self.assertIsInstance(option_chain, dict, "Option chain response should be a dictionary")
         self.assertIn("records", option_chain, "Option chain should contain 'records' key")
 
@@ -174,12 +176,12 @@ class TestNSEAPI(unittest.TestCase):
         """Test fetching option chain for a stock."""
         symbol = "RELIANCE"
         option_chain = get_option_chain(symbol)
-
         self.assertIsInstance(option_chain, dict, "Option chain response should be a dictionary")
         self.assertIn("records", option_chain, "Option chain should contain 'records' key")
 
     def test_get_option_chain_invalid_symbol(self):
         """Test fetching option chain for an invalid symbol."""
+
         with self.assertRaises(ValueError) as context:
             get_option_chain("INVALID_SYMBOL")
         self.assertIn("Invalid symbol", str(context.exception))
@@ -195,6 +197,7 @@ class TestNSEAPI(unittest.TestCase):
             self.assertIn("percent_change", indices[0], "Index data should contain 'percent_change' key")
 
     def test_get_holidays_trading(self):
+
         """Test fetching trading holidays."""
         with patch("nseapi.fetch_data_from_nse") as mock_fetch:
             mock_fetch.return_value = {
@@ -210,10 +213,8 @@ class TestNSEAPI(unittest.TestCase):
         with patch("nseapi.fetch_data_from_nse") as mock_fetch:
             mock_fetch.return_value = {
                 "CD": [
-
                     {
                         "tradingDate": "19-Feb-2025",
-
                         "description": "Chhatrapati Shivaji Maharaj Jayanti",
                     }
                 ]
@@ -225,6 +226,7 @@ class TestNSEAPI(unittest.TestCase):
 
     def test_bulk_deals(self):
         """Test fetching bulk deals."""
+
         from_date = datetime(2023, 1, 1)
         to_date = datetime(2023, 12, 31)
         bulk_deals_data = bulk_deals(from_date, to_date)
@@ -234,21 +236,18 @@ class TestNSEAPI(unittest.TestCase):
         """Test fetching FII/DII trading activity data."""
         with patch("nseapi.fetch_data_from_nse") as mock_fetch:
             mock_fetch.return_value = [
-
                 {
-                    "category": "FII/FPI *",
 
+                    "category": "FII/FPI *",
                     "date": "07-Jan-2025",
                     "buyValue": "11726.68",
                     "sellValue": "13218.14",
                     "netValue": "-1491.46",
-
                 },
                 {
                     "category": "DII **",
                     "date": "07-Jan-2025",
                     "buyValue": "12256.43",
-
                     "sellValue": "10641.15",
                     "netValue": "1615.28",
                 },
@@ -256,36 +255,25 @@ class TestNSEAPI(unittest.TestCase):
             data = get_fii_dii_data()
             self.assertIsInstance(data, list, "FII/DII data response should be a list")
             self.assertIn("category", data[0], "FII/DII data should contain 'category' key")
+
             self.assertIn("date", data[0], "FII/DII data should contain 'date' key")
             self.assertIn("buyValue", data[0], "FII/DII data should contain 'buyValue' key")
             self.assertIn("sellValue", data[0], "FII/DII data should contain 'sellValue' key")
             self.assertIn("netValue", data[0], "FII/DII data should contain 'netValue' key")
 
 
-    def test_fii_dii_data_pretty(self):
-        """Test pretty-print for FII/DII trading activity data."""
-        with patch("nseapi.fetch_data_from_nse") as mock_fetch:
-            mock_fetch.return_value = [
-                {
-                    "category": "FII/FPI *",
-                    "date": "07-Jan-2025",
-                    "buyValue": "11726.68",
-                    "sellValue": "13218.14",
-                    "netValue": "-1491.46",
-                }
-            ]
-            # Ensure no errors are raised when pretty=True
-            get_fii_dii_data(pretty=True)
-
     def test_logging_setup(self):
         """Test if logger is properly configured."""
         logger.info("Test message")
         log_file = Path("logs/nseapi.log")
+
         self.assertTrue(log_file.exists())
 
         # Clean up
         for handler in logger.handlers:
+
             handler.close()
+
             logger.removeHandler(handler)
 
         log_file.unlink()
@@ -296,19 +284,23 @@ class TestNSEAPI(unittest.TestCase):
             mock_get.return_value.status_code = 200
             mock_get.return_value.json.return_value = {"key": "value"}
             data = fetch_data_from_nse("test-endpoint")
+
             self.assertEqual(data, {"key": "value"})
 
     def test_fetch_data_from_nse_retry(self):
         """Test retry logic on failed API request."""
         with patch("nseapi.session.get", side_effect=requests.exceptions.RequestException("Failed")) as mock_get:
+
             with self.assertRaises(requests.exceptions.RequestException) as context:
                 fetch_data_from_nse("test-endpoint", retries=3, delay=1)
             self.assertEqual(str(context.exception), "Failed")
+
             self.assertEqual(mock_get.call_count, 3)
 
     def test_fetch_data_from_nse_timeout(self):
         """Test timeout handling."""
         with patch("nseapi.session.get", side_effect=requests.exceptions.Timeout("Timeout")) as mock_get:
+
             with self.assertRaises(requests.exceptions.Timeout) as context:
                 fetch_data_from_nse("test-endpoint", timeout=5)
             self.assertEqual(str(context.exception), "Timeout")

@@ -1,11 +1,11 @@
 # NSEAPI
 
+
 NSEAPI is a Python package designed for seamless interaction with the National Stock Exchange (NSE) of India. It provides a robust and easy-to-use interface to fetch market data, download historical bhavcopies, retrieve stock quotes, analyze option chains, and more. This package is ideal for developers, traders, and analysts who need programmatic access to NSE data.
 
 ---
 
 ## Table of Contents
-
 
 - [Installation](#installation)
 - [Usage](#usage)
@@ -20,7 +20,6 @@ NSEAPI is a Python package designed for seamless interaction with the National S
   - [Fetching Bulk Deals](#fetching-bulk-deals)
   - [Fetching FII/DII Trading Activity](#fetching-fiidii-trading-activity)
   - [Logging](#logging)
-
 - [Troubleshooting](#troubleshooting)
 - [Project Structure](#project-structure)
 - [License](#license)
@@ -45,48 +44,40 @@ pip install .
 
 ---
 
-
 ## Usage
 
 ### Fetching Market Status
 
-The `get_market_status` function retrieves the current market status, including whether the market is open or closed. You can use the `pretty` parameter to print the output in a formatted table.
-
+The `get_market_status` function retrieves the current market status, including whether the market is open or closed.
 
 ```python
 from nseapi import get_market_status
 
-
 # Fetch market status
 market_status = get_market_status()
-
-
 print("Market Status:", market_status)
 
-# Pretty print market status
-
-get_market_status(pretty=True)
 ```
 
 ---
 
-
 ### Downloading Bhavcopy
-
 
 The `get_bhavcopy` function downloads various types of bhavcopy reports (e.g., equity, delivery, indices, FnO, priceband, PR, CM MII) for a specific date. The file is saved in the specified directory.
 
 ```python
 from nseapi import get_bhavcopy
+
 from datetime import datetime
 
-# Download equity bhavcopy
 
+# Download equity bhavcopy
 date = datetime(2023, 12, 26)
 get_bhavcopy("equity", date, download_dir='downloads')
 
 # Download FnO bhavcopy
 get_bhavcopy("fno", date, download_dir='downloads')
+
 
 # Download priceband report
 get_bhavcopy("priceband", date, download_dir='downloads')
@@ -96,55 +87,46 @@ get_bhavcopy("priceband", date, download_dir='downloads')
 
 ### Fetching Stock Quotes
 
-The `get_stock_quote` function fetches the stock quote for a specific symbol, including the current price, open, high, low, close, and volume. The `pretty` parameter can be used to display the data in a formatted table.
+The `get_stock_quote` function fetches the stock quote for a specific symbol, including the current price, open, high, low, close, and volume.
+
 
 ```python
 from nseapi import get_stock_quote
 
 symbol = "INFY"
 quote = get_stock_quote(symbol)
-
 print("Stock Quote:", quote)
-
-# Pretty print stock quote
-get_stock_quote(symbol, pretty=True)
 ```
-
 
 ---
 
 ### Retrieving Option Chain Data
 
-The `get_option_chain` function retrieves the option chain data for a specific stock or index. This includes details about call and put options, strike prices, and open interest. The `pretty` parameter formats the output as a table.
+The `get_option_chain` function retrieves the option chain data for a specific stock or index. This includes details about call and put options, strike prices, and open interest.
+
 
 ```python
-
 from nseapi import get_option_chain
-
 
 # For a stock
 symbol = "RELIANCE"
 option_chain = get_option_chain(symbol)
-print("Option Chain for RELIANCE:", option_chain)
 
-# Pretty print option chain for a stock
-get_option_chain(symbol, pretty=True)
+print("Option Chain for RELIANCE:", option_chain)
 
 # For an index
 symbol = "NIFTY"
 option_chain = get_option_chain(symbol, is_index=True)
 print("Option Chain for NIFTY:", option_chain)
-
-# Pretty print option chain for an index
-get_option_chain(symbol, is_index=True, pretty=True)
-
 ```
+
 
 ---
 
 ### Fetching Corporate Actions
 
 The `get_corporate_actions` function fetches forthcoming corporate actions (e.g., dividends, stock splits) for a specific segment or symbol. You can filter the results by date range.
+
 
 ```python
 from nseapi import get_corporate_actions
@@ -160,13 +142,13 @@ to_date = datetime(2023, 12, 31)
 actions = get_corporate_actions(
     segment="equities",
     symbol="HDFCBANK",
+
     from_date=from_date,
     to_date=to_date
 )
-
 print("Filtered Corporate Actions:", actions)
-
 ```
+
 
 ---
 
@@ -180,47 +162,46 @@ from datetime import datetime
 
 # Fetch corporate announcements for equities
 announcements = get_announcements(index="equities")
-
 print("Corporate Announcements:", announcements)
 
 # Fetch corporate announcements for a specific symbol and date range
+
 from_date = datetime(2023, 1, 1)
 to_date = datetime(2023, 12, 31)
 announcements = get_announcements(
     index="equities",
     symbol="HDFCBANK",
+
     from_date=from_date,
     to_date=to_date
 )
-
 print("Filtered Corporate Announcements:", announcements)
 ```
 
 ---
 
+
 ### Fetching All Indices
 
-The `get_all_indices` function fetches data for all NSE indices, including the last price, change, and percentage change. The `pretty` parameter formats the output as a table.
+The `get_all_indices` function fetches data for all NSE indices, including the last price, change, and percentage change.
 
 ```python
 from nseapi import get_all_indices
 
 indices = get_all_indices()
-
 print("All Indices:", indices)
-
-# Pretty print all indices
-get_all_indices(pretty=True)
 ```
-
 
 ---
 
+
 ### Fetching Holidays
+
 
 The `get_holidays` function fetches the list of trading or clearing holidays from the NSE. You can specify the type of holiday list to fetch (trading or clearing).
 
 ```python
+
 from nseapi import get_holidays
 
 # Fetch trading holidays
@@ -230,54 +211,45 @@ print("Trading Holidays:", trading_holidays)
 # Fetch clearing holidays
 clearing_holidays = get_holidays(holiday_type="clearing")
 print("Clearing Holidays:", clearing_holidays)
+
 ```
 
 ---
 
-
 ### Fetching Bulk Deals
 
-
 The `bulk_deals` function fetches bulk deals data for a specified date range.
-
 
 ```python
 from nseapi import bulk_deals
 from datetime import datetime
 
-
 from_date = datetime(2023, 1, 1)
+
 to_date = datetime(2023, 12, 31)
 bulk_deals_data = bulk_deals(from_date, to_date)
+
 print("Bulk Deals:", bulk_deals_data)
 ```
-
 
 ---
 
 ### Fetching FII/DII Trading Activity
 
-
-The `get_fii_dii_data` function fetches trading activity data for Foreign Institutional Investors (FII) and Domestic Institutional Investors (DII). The `pretty` parameter can be used to display the data in a formatted table.
+The `get_fii_dii_data` function fetches trading activity data for Foreign Institutional Investors (FII) and Domestic Institutional Investors (DII).
 
 ```python
 from nseapi import get_fii_dii_data
 
-
 # Fetch FII/DII trading activity
 fii_dii_data = get_fii_dii_data()
-
 print("FII/DII Trading Activity:", fii_dii_data)
-
-# Pretty print FII/DII trading activity
-get_fii_dii_data(pretty=True)
 ```
+
 
 ---
 
-
 ### Logging
-
 
 The package includes built-in logging functionality that tracks API interactions:
 
@@ -285,34 +257,37 @@ The package includes built-in logging functionality that tracks API interactions
 - **Info level:** Logs successful responses.
 - **Error level:** Captures failed requests with details.
 
+
 Logs are written to `nseapi.log` in the current working directory. Example log output:
 
 ```
+
 2024-12-27 06:53:03 - INFO - Successfully fetched data from marketStatus
 2024-12-27 06:53:04 - ERROR - Failed to fetch data from invalid_endpoint: 404 Client Error
 ```
 
 ---
 
-
 ## Troubleshooting
-
 
 ### Common Issues
 
 - **API Errors**: Ensure you have a stable internet connection and are not hitting rate limits. If the issue persists, check the NSE website for API status.
 - **Invalid Symbols**: Verify that the symbol you’re using is valid and supported by the NSE.
+
 - **File Download Failures**: Ensure the specified download directory exists and is writable.
 
 ---
 
 ## Project Structure
 
+
 The project is organized as follows:
 
 ```
 ./
 ├── .gitignore                # Specifies files and directories to ignore in Git
+
 ├── .pre-commit-config.yaml   # Configuration for pre-commit hooks
 ├── LICENSE                   # License file for the project (MIT License)
 ├── README.md                 # Project documentation
@@ -327,8 +302,6 @@ The project is organized as follows:
 
 ---
 
-
 ## License
-
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
