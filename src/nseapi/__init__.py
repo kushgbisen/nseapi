@@ -562,6 +562,7 @@ def get_regulatory_status() -> Dict:
     except Exception as e:
         raise Exception(f"Failed to fetch regulatory status: {e}")
 
+
 def get_most_active_equities(index: Literal["volume", "value"]) -> List[Dict]:
     """
     Fetch the most active equities based on volume or value.
@@ -610,7 +611,6 @@ def get_most_active_sme(index: Literal["volume", "value"]) -> List[Dict]:
 
 
 def get_most_active_etf(index: Literal["volume", "value"]) -> List[Dict]:
-
     """
     Fetch the most active ETFs based on volume or value.
 
@@ -653,6 +653,30 @@ def get_volume_gainers() -> List[Dict]:
     response = fetch_data_from_nse(endpoint)
     return response.get("data", [])
 
+
+def get_all_indices_performance() -> Dict:
+    """
+    Fetch performance data for all NSE indices.
+
+    Returns:
+        Dict: A dictionary containing performance data for all indices, including:
+              - data: List of index performance details.
+              - timestamp: Timestamp of the data.
+              - advances: Number of advancing stocks.
+              - declines: Number of declining stocks.
+              - unchanged: Number of unchanged stocks.
+
+              - dates: Key historical dates.
+              - date30dAgo: Date 30 days ago.
+              - date365dAgo: Date 365 days ago.
+
+    Raises:
+        requests.exceptions.RequestException: If the API request fails.
+    """
+    endpoint = "allIndices"
+    return fetch_data_from_nse(endpoint)
+
+
 __version__ = "0.1.0"
 __all__ = [
     "get_market_status",
@@ -672,4 +696,5 @@ __all__ = [
     "get_most_active_sme",
     "get_most_active_etf",
     "get_volume_gainers",
+    "get_all_indices_performance",
 ]

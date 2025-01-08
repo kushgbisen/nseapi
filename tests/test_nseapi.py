@@ -17,11 +17,9 @@ from nseapi import (
     get_corporate_actions,
     get_announcements,
     get_stock_quote,
-
     get_option_chain,
     get_all_indices,
     get_holidays,
-
     bulk_deals,
     get_fii_dii_data,
     get_top_gainers,
@@ -33,15 +31,14 @@ from nseapi import (
     get_most_active_equities,
     get_most_active_sme,
     get_most_active_etf,
-
     get_volume_gainers,
+    get_all_indices_performance,
 )
 
 
 class TestNSEAPI(unittest.TestCase):
 
     def setUp(self):
-
         """Set up test fixtures before each test method."""
         self.test_dir = os.path.join(os.getcwd(), "test_downloads")
         if not os.path.exists(self.test_dir):
@@ -54,20 +51,15 @@ class TestNSEAPI(unittest.TestCase):
                 os.remove(os.path.join(self.test_dir, file))
             os.rmdir(self.test_dir)
 
-
     def test_get_market_status(self):
         """Test market status retrieval."""
         response = get_market_status()
         self.assertIsInstance(
             response, dict, "Market status response should be a dictionary"
-
         )
         self.assertIn(
-
             "marketState",
-
             response,
-
             "Market status response should contain 'marketState' key",
         )
 
@@ -81,18 +73,15 @@ class TestNSEAPI(unittest.TestCase):
         )
 
         self.assertGreater(
-
             os.path.getsize(file_path), 0, "Downloaded equity bhavcopy file is empty"
         )
 
     def test_get_bhavcopy_delivery(self):
-
         """Test delivery bhavcopy download."""
 
         date = datetime(2023, 12, 26)
         file_path = get_bhavcopy("delivery", date, download_dir=self.test_dir)
         self.assertTrue(
-
             os.path.exists(file_path),
             f"Delivery bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
         )
@@ -105,13 +94,11 @@ class TestNSEAPI(unittest.TestCase):
         date = datetime(2023, 12, 26)
         file_path = get_bhavcopy("indices", date, download_dir=self.test_dir)
         self.assertTrue(
-
             os.path.exists(file_path),
             f"Indices bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
         )
 
         self.assertGreater(
-
             os.path.getsize(file_path), 0, "Downloaded indices bhavcopy file is empty"
         )
 
@@ -121,7 +108,6 @@ class TestNSEAPI(unittest.TestCase):
         file_path = get_bhavcopy("fno", date, download_dir=self.test_dir)
         self.assertTrue(
             os.path.exists(file_path),
-
             f"FnO bhavcopy file for {date.strftime('%Y-%m-%d')} not found at {file_path}",
         )
         self.assertGreater(
@@ -139,9 +125,7 @@ class TestNSEAPI(unittest.TestCase):
         )
         self.assertGreater(
             os.path.getsize(file_path), 0, "Downloaded priceband report file is empty"
-
         )
-
 
     def test_get_bhavcopy_pr(self):
         """Test PR bhavcopy download."""
@@ -170,7 +154,6 @@ class TestNSEAPI(unittest.TestCase):
             "Downloaded CM MII security report file is empty",
         )
 
-
     def test_get_bhavcopy_invalid_type(self):
         """Test get_bhavcopy with invalid bhavcopy type."""
 
@@ -178,7 +161,6 @@ class TestNSEAPI(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             get_bhavcopy("invalid_type", date, download_dir=self.test_dir)
         self.assertIn("Invalid bhavcopy_type", str(context.exception))
-
 
     def test_get_corporate_actions(self):
         """Test fetching corporate actions."""
@@ -217,7 +199,6 @@ class TestNSEAPI(unittest.TestCase):
                 "symbol", announcements[0], "Announcement should contain 'symbol' key"
             )
 
-
     def test_get_announcements_with_filter(self):
         """Test fetching corporate announcements with symbol and date range."""
         from_date = datetime(2023, 1, 1)
@@ -228,7 +209,6 @@ class TestNSEAPI(unittest.TestCase):
         self.assertIsInstance(
             announcements, list, "Announcements response should be a list"
         )
-
 
     def test_get_stock_quote(self):
         """Test fetching stock quote for a valid symbol."""
@@ -255,7 +235,6 @@ class TestNSEAPI(unittest.TestCase):
         symbol = "NIFTY"
         option_chain = get_option_chain(symbol, is_index=True)
         self.assertIsInstance(
-
             option_chain, dict, "Option chain response should be a dictionary"
         )
         self.assertIn(
@@ -275,7 +254,6 @@ class TestNSEAPI(unittest.TestCase):
         )
 
     def test_get_option_chain_invalid_symbol(self):
-
         """Test fetching option chain for an invalid symbol."""
         with self.assertRaises(ValueError) as context:
 
@@ -301,13 +279,11 @@ class TestNSEAPI(unittest.TestCase):
                 "Index data should contain 'percent_change' key",
             )
 
-
     def test_get_holidays_trading(self):
         """Test fetching trading holidays."""
         with patch("nseapi.fetch_data_from_nse") as mock_fetch:
             mock_fetch.return_value = {
                 "CD": [{"tradingDate": "26-Jan-2025", "description": "Republic Day"}]
-
             }
             holidays = get_holidays(holiday_type="trading")
             self.assertIn("CD", holidays)
@@ -316,18 +292,14 @@ class TestNSEAPI(unittest.TestCase):
             self.assertEqual(holidays["CD"][0]["description"], "Republic Day")
 
     def test_get_holidays_clearing(self):
-
         """Test fetching clearing holidays."""
 
         with patch("nseapi.fetch_data_from_nse") as mock_fetch:
             mock_fetch.return_value = {
-
                 "CD": [
                     {
-
                         "tradingDate": "19-Feb-2025",
                         "description": "Chhatrapati Shivaji Maharaj Jayanti",
-
                     }
                 ]
             }
@@ -344,7 +316,6 @@ class TestNSEAPI(unittest.TestCase):
         to_date = datetime(2023, 12, 31)
         bulk_deals_data = bulk_deals(from_date, to_date)
         self.assertIsInstance(
-
             bulk_deals_data, list, "Bulk deals response should be a list"
         )
 
@@ -353,7 +324,6 @@ class TestNSEAPI(unittest.TestCase):
         with patch("nseapi.fetch_data_from_nse") as mock_fetch:
             mock_fetch.return_value = [
                 {
-
                     "category": "FII/FPI *",
                     "date": "07-Jan-2025",
                     "buyValue": "11726.68",
@@ -365,7 +335,6 @@ class TestNSEAPI(unittest.TestCase):
                     "date": "07-Jan-2025",
                     "buyValue": "12256.43",
                     "sellValue": "10641.15",
-
                     "netValue": "1615.28",
                 },
             ]
@@ -385,7 +354,6 @@ class TestNSEAPI(unittest.TestCase):
             self.assertIn(
                 "netValue", data[0], "FII/DII data should contain 'netValue' key"
             )
-
 
     def test_logging_setup(self):
         """Test if logger is properly configured."""
@@ -415,7 +383,6 @@ class TestNSEAPI(unittest.TestCase):
         """Test retry logic on failed API request."""
         with patch(
             "nseapi.session.get",
-
             side_effect=requests.exceptions.RequestException("Failed"),
         ) as mock_get:
             with self.assertRaises(requests.exceptions.RequestException) as context:
@@ -444,7 +411,6 @@ class TestNSEAPI(unittest.TestCase):
                     "pChange": -0.24813895781639392,
                     "quantityTraded": 253738995,
                     "totalTradedVolume": 294651841,
-
                     "totalTradedValue": 2348375172.77,
                     "previousClose": 8.06,
                     "exDate": "20-Aug-2024",
@@ -456,14 +422,11 @@ class TestNSEAPI(unittest.TestCase):
                     "closePrice": 0,
                     "dayHigh": 8.1,
                     "dayLow": 7.87,
-
                     "lastUpdateTime": "08-Jan-2025 15:59:59",
                 }
             ],
-
             "timestamp": "08-Jan-2025 16:00:00",
         }
-
 
         with patch("nseapi.fetch_data_from_nse", return_value=mock_response):
             data = get_most_active_equities("volume")
@@ -475,20 +438,17 @@ class TestNSEAPI(unittest.TestCase):
         """Test fetching most active equities by value."""
         mock_response = {
             "data": [
-
                 {
                     "symbol": "RELIANCE",
                     "identifier": "RELIANCEEQN",
                     "lastPrice": 1261.35,
                     "pChange": 1.6520933231252772,
                     "quantityTraded": 16989284,
-
                     "totalTradedVolume": 19346579,
                     "totalTradedValue": 24439178990.170002,
                     "previousClose": 1240.85,
                     "exDate": "28-Oct-2024",
                     "purpose": "BONUS 1:1",
-
                     "yearHigh": 1608.8,
                     "yearLow": 1201.5,
                     "change": 20.5,
@@ -498,7 +458,6 @@ class TestNSEAPI(unittest.TestCase):
                     "dayLow": 1245.35,
                     "lastUpdateTime": "08-Jan-2025 16:00:00",
                 }
-
             ],
             "timestamp": "08-Jan-2025 16:00:00",
         }
@@ -522,16 +481,13 @@ class TestNSEAPI(unittest.TestCase):
                     "totalTradedValue": 1404.4608,
                     "open": 78.5,
                     "dayHigh": 81.5,
-
                     "dayLow": 74.65,
                     "yearHigh": 81.5,
                     "yearLow": 15.04,
                     "previousClose": 77.65,
                     "purpose": None,
-
                     "exDate": None,
                 }
-
             ],
             "timestamp": "08-Jan-2025 16:00:00",
         }
@@ -547,7 +503,6 @@ class TestNSEAPI(unittest.TestCase):
             "data": [
                 {
                     "symbol": "DANISH",
-
                     "identifier": "DANISHSMN",
                     "lastPrice": 1183,
                     "pChange": 0.7365776812704979,
@@ -560,10 +515,8 @@ class TestNSEAPI(unittest.TestCase):
                     "yearLow": 541.5,
                     "previousClose": 1174.35,
                     "purpose": None,
-
                     "exDate": None,
                 }
-
             ],
             "timestamp": "08-Jan-2025 16:00:00",
         }
@@ -580,11 +533,9 @@ class TestNSEAPI(unittest.TestCase):
             "data": [
                 {
                     "symbol": "AXISBPSETF",
-
                     "identifier": "AXISBPSETFEQN",
                     "lastPrice": 12.26,
                     "pChange": -0.48701298701299106,
-
                     "totalTradedVolume": 22823585,
                     "totalTradedValue": 2789.042087,
                     "nav": 12.3031,
@@ -594,7 +545,6 @@ class TestNSEAPI(unittest.TestCase):
                     "closePrice": 0,
                     "previousClose": 12.32,
                 }
-
             ],
             "timestamp": "08-Jan-2025 16:00:00",
             "navData": {
@@ -611,7 +561,6 @@ class TestNSEAPI(unittest.TestCase):
     def test_get_most_active_etf_value(self):
         """Test fetching most active ETFs by value."""
         mock_response = {
-
             "navDate": "07-Jan-2025",
             "data": [
                 {
@@ -623,10 +572,8 @@ class TestNSEAPI(unittest.TestCase):
                     "totalTradedValue": 13347.553300200003,
                     "nav": 264.7357,
                     "open": 265.95,
-
                     "dayHigh": 266.04,
                     "dayLow": 262.8,
-
                     "closePrice": 0,
                     "previousClose": 265.16,
                 }
@@ -644,13 +591,11 @@ class TestNSEAPI(unittest.TestCase):
             self.assertIn("symbol", data[0], "Data should contain 'symbol' key")
 
     def test_get_volume_gainers(self):
-
         """Test fetching volume gainers."""
         mock_response = {
             "data": [
                 {
                     "symbol": "AXISBPSETF",
-
                     "companyName": "AXIS MUTUAL FUND - Axis Nifty AAA Bond Plus SDL Apr 2026 50-50 ETF",
                     "volume": 22823585,
                     "week1AvgVolume": 351455,
@@ -664,7 +609,6 @@ class TestNSEAPI(unittest.TestCase):
             ],
             "timestamp": "08-Jan-2025 16:00:24",
         }
-
 
         with patch("nseapi.fetch_data_from_nse", return_value=mock_response):
             data = get_volume_gainers()
@@ -686,7 +630,72 @@ class TestNSEAPI(unittest.TestCase):
 
             self.assertIn("data", status, "Response should contain 'data' key")
 
+    def test_get_all_indices_performance(self):
+        """Test fetching performance data for all indices."""
+        mock_response = {
+            "data": [
+                {
+                    "key": "BROAD MARKET INDICES",
+                    "index": "NIFTY 50",
 
+                    "indexSymbol": "NIFTY 50",
+                    "last": 23688.95,
+                    "variation": -18.95,
+                    "percentChange": -0.08,
+                    "open": 23746.65,
+                    "high": 23751.85,
+                    "low": 23496.15,
+                    "previousClose": 23707.9,
+                    "yearHigh": 26277.35,
+                    "yearLow": 21137.2,
+                    "indicativeClose": 0,
+                    "pe": "21.83",
+                    "pb": "3.53",
+                    "dy": "1.27",
+                    "declines": "28",
+                    "advances": "22",
+                    "unchanged": "1",
+                    "perChange365d": 10.11,
+                    "date365dAgo": "08-Jan-2024",
+                    "chart365dPath": "https://nsearchives.nseindia.com/365d/NIFTY-50.svg",
+                    "date30dAgo": "06-Dec-2024",
+                    "perChange30d": -4.01,
+                    "chart30dPath": "https://nsearchives.nseindia.com/30d/NIFTY-50.svg",
+                    "chartTodayPath": "https://nsearchives.nseindia.com/today/NIFTY-50.svg",
+
+                    "previousDay": 23616.05,
+                    "oneWeekAgo": 23742.9,
+                    "oneMonthAgo": 24677.8,
+
+                    "oneYearAgo": 21513,
+
+                }
+            ],
+            "timestamp": "08-Jan-2025 15:30",
+            "advances": 2215,
+
+            "declines": 5649,
+            "unchanged": 71,
+            "dates": {
+                "previousDay": "06-Jan-2025",
+                "oneWeekAgo": "01-Jan-2025",
+
+                "oneMonthAgo": "06-Dec-2024",
+
+                "oneYearAgo": "08-Jan-2024",
+            },
+            "date30dAgo": "06-Dec-2024",
+            "date365dAgo": "08-Jan-2024",
+        }
+
+        with patch("nseapi.fetch_data_from_nse", return_value=mock_response):
+
+            data = get_all_indices_performance()
+
+
+            self.assertIsInstance(data, dict, "Response should be a dictionary")
+            self.assertIn("data", data, "Response should contain 'data' key")
+            self.assertIn("timestamp", data, "Response should contain 'timestamp' key")
 
 if __name__ == "__main__":
 
