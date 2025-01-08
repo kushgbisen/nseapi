@@ -562,9 +562,98 @@ def get_regulatory_status() -> Dict:
     except Exception as e:
         raise Exception(f"Failed to fetch regulatory status: {e}")
 
+def get_most_active_equities(index: Literal["volume", "value"]) -> List[Dict]:
+    """
+    Fetch the most active equities based on volume or value.
+
+    Args:
+        index (Literal["volume", "value"]): The index to filter by (volume or value).
+
+    Returns:
+        List[Dict]: A list of dictionaries containing the most active equities data.
+
+    Raises:
+        ValueError: If the index is not "volume" or "value".
+        requests.exceptions.RequestException: If the API request fails.
+    """
+    if index not in ["volume", "value"]:
+        raise ValueError("index must be 'volume' or 'value'")
+
+    endpoint = "live-analysis-most-active-securities"
+    params = {"index": index}
+    response = fetch_data_from_nse(endpoint, params=params)
+    return response.get("data", [])
+
+
+def get_most_active_sme(index: Literal["volume", "value"]) -> List[Dict]:
+    """
+    Fetch the most active SME securities based on volume or value.
+
+
+    Args:
+        index (Literal["volume", "value"]): The index to filter by (volume or value).
+
+    Returns:
+        List[Dict]: A list of dictionaries containing the most active SME securities data.
+
+    Raises:
+        ValueError: If the index is not "volume" or "value".
+        requests.exceptions.RequestException: If the API request fails.
+    """
+    if index not in ["volume", "value"]:
+        raise ValueError("index must be 'volume' or 'value'")
+
+    endpoint = "live-analysis-most-active-sme"
+    params = {"index": index}
+    response = fetch_data_from_nse(endpoint, params=params)
+    return response.get("data", [])
+
+
+def get_most_active_etf(index: Literal["volume", "value"]) -> List[Dict]:
+
+    """
+    Fetch the most active ETFs based on volume or value.
+
+    Args:
+        index (Literal["volume", "value"]): The index to filter by (volume or value).
+
+
+    Returns:
+        List[Dict]: A list of dictionaries containing the most active ETF data.
+
+
+    Raises:
+
+        ValueError: If the index is not "volume" or "value".
+        requests.exceptions.RequestException: If the API request fails.
+
+    """
+    if index not in ["volume", "value"]:
+        raise ValueError("index must be 'volume' or 'value'")
+
+    endpoint = "live-analysis-most-active-etf"
+    params = {"index": index}
+    response = fetch_data_from_nse(endpoint, params=params)
+    return response.get("data", [])
+
+
+def get_volume_gainers() -> List[Dict]:
+    """
+
+    Fetch the list of securities with the highest volume gain compared to their average volume.
+
+    Returns:
+        List[Dict]: A list of dictionaries containing the volume gainers data.
+
+    Raises:
+        requests.exceptions.RequestException: If the API request fails.
+
+    """
+    endpoint = "live-analysis-volume-gainers"
+    response = fetch_data_from_nse(endpoint)
+    return response.get("data", [])
 
 __version__ = "0.1.0"
-
 __all__ = [
     "get_market_status",
     "get_bhavcopy",
@@ -579,4 +668,8 @@ __all__ = [
     "get_top_gainers",
     "get_top_losers",
     "get_regulatory_status",
+    "get_most_active_equities",
+    "get_most_active_sme",
+    "get_most_active_etf",
+    "get_volume_gainers",
 ]
