@@ -767,6 +767,38 @@ def get_52_week_counts() -> Dict[str, int]:
         "high": response.get("high", 0),
         "low": response.get("low", 0)
     }
+
+def get_52_week_data_by_symbol(symbol: str) -> List[Dict]:
+    """
+    Fetch 52-week high and low data for a specific symbol.
+
+
+    Args:
+        symbol (str): The stock symbol (e.g., "INFY", "RELIANCE").
+
+    Returns:
+        List[Dict]: A list of dictionaries containing 52-week high/low data for the symbol.
+
+    Raises:
+        ValueError: If the symbol is invalid or not found.
+        requests.exceptions.RequestException: If the API request fails.
+    """
+    endpoint = "live-analysis-52Week/search"
+    params = {"sym": symbol}
+
+    try:
+        response = fetch_data_from_nse(endpoint, params=params)
+        if not response:
+            raise ValueError(f"No data found for symbol: {symbol}")
+        return response
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 404:
+
+            raise ValueError(f"Invalid symbol: {symbol}")
+        raise Exception(f"Failed to fetch 52-week data: {e}")
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"API request failed: {e}")
+
 __version__ = "0.1.0"
 __all__ = [
     "get_market_status",
@@ -790,5 +822,6 @@ __all__ = [
     "get_price_band_hitters",
     "get_52_week_high",
     "get_52_week_low",
+    "get_52_week_data_by_symbol",
     "get_52_week_counts",
 ]
