@@ -32,6 +32,9 @@ from nseapi import (
     get_52_week_counts,
     get_52_week_data_by_symbol,
     get_large_deals,
+    get_advance_data,
+    get_decline_data,
+    get_unchanged_data,
 )
 
 
@@ -420,6 +423,134 @@ class TestNSEAPI(unittest.TestCase):
             self.assertEqual(len(data["short_deals"]), 1)
             self.assertEqual(len(data["block_deals"]), 1)
 
+    def test_get_advance_data(self):
+        with self.mock_fetch_data(
+            {
+                "advance": {
+                    "count": {
+                        "Advances": 952,
+                        "Declines": 1865,
+                        "Total": 2914,
+                        "Unchange": 97,
+                    },
+                    "data": [
+                        {
+                            "identifier": "RELIANCEEQN",
+                            "symbol": "RELIANCE",
+                            "series": "EQ",
+                            "marketType": "N",
+                            "pchange": 1.6520933231252772,
+                            "change": 20.5,
+                            "basePrice": 1240.85,
+                            "previousClose": 1240.85,
+                            "lastPrice": 1261.35,
+                            "totalTradedVolume": 193.46579,
+                            "totalTradedValue": 2443.9178990170003,
+                        }
+                    ],
+                }
+            }
+        ):
+            data = get_advance_data()
+            self.assertIsInstance(data, dict)
+            self.assertIn("count", data)
+            self.assertIn("data", data)
+
+    # Test for get_advance_data with symbol
+    def test_get_advance_data_with_symbol(self):
+
+        with self.mock_fetch_data(
+            [
+                {
+                    "identifier": "INFYEQN",
+                    "symbol": "INFY",
+                    "series": "EQ",
+                    "marketType": "N",
+                    "pchange": 0.09840225807287417,
+                    "change": 1.900000000000091,
+                    "basePrice": 1930.85,
+                    "previousClose": 1930.85,
+                    "lastPrice": 1932.75,
+                    "totalTradedVolume": 54.8205,
+                    "issuedCap": 4152269194,
+                    "totalTradedValue": 1050.4375287,
+                    "totalMarketCap": 802529.8284703499,
+                }
+            ]
+        ):
+            data = get_advance_data(symbol="INFY")
+            self.assertIsInstance(data, list)
+            self.assertEqual(data[0]["symbol"], "INFY")
+
+    # Test for get_decline_data
+    def test_get_decline_data(self):
+        with self.mock_fetch_data(
+            {
+                "decline": {
+                    "count": {
+                        "Advances": 952,
+                        "Declines": 1865,
+                        "Total": 2914,
+                        "Unchange": 97,
+                    },
+                    "data": [
+                        {
+                            "identifier": "HDFCBANKEQN",
+                            "symbol": "HDFCBANK",
+                            "series": "EQ",
+                            "marketType": "N",
+                            "pchange": -1.5,
+                            "change": -20.5,
+                            "basePrice": 1500.0,
+                            "previousClose": 1500.0,
+                            "lastPrice": 1479.5,
+                            "totalTradedVolume": 100.0,
+                            "totalTradedValue": 150000.0,
+                        }
+                    ],
+                }
+            }
+        ):
+            data = get_decline_data()
+            self.assertIsInstance(data, dict)
+            self.assertIn("count", data)
+            self.assertIn("data", data)
+
+    # Test for get_unchanged_data
+    def test_get_unchanged_data(self):
+        with self.mock_fetch_data(
+            {
+                "unchanged": {
+                    "count": {
+                        "Advances": 952,
+                        "Declines": 1865,
+                        "Total": 2914,
+                        "Unchange": 97,
+                    },
+                    "data": [
+                        {
+                            "identifier": "TCSEQN",
+                            "symbol": "TCS",
+                            "series": "EQ",
+                            "marketType": "N",
+                            "pchange": 0.0,
+                            "change": 0.0,
+                            "basePrice": 3500.0,
+                            "previousClose": 3500.0,
+                            "lastPrice": 3500.0,
+                            "totalTradedVolume": 50.0,
+                            "totalTradedValue": 175000.0,
+                        }
+                    ],
+                }
+            }
+        ):
+            data = get_unchanged_data()
+            self.assertIsInstance(data, dict)
+            self.assertIn("count", data)
+            self.assertIn("data", data)
+
 
 if __name__ == "__main__":
+
     unittest.main()

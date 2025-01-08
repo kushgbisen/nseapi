@@ -871,6 +871,108 @@ def get_large_deals() -> Dict:
         raise Exception(f"Failed to fetch large deals data: {e}")
 
 
+def get_advance_data(symbol: Optional[str] = None) -> Dict:
+    """
+    Fetch data for stocks that have advanced in price.
+
+
+    Args:
+        symbol (str, optional): The stock symbol (e.g., "INFY"). If provided, fetches data for the specific symbol.
+                               If None, fetches data for all advancing stocks.
+
+    Returns:
+        Dict: A dictionary containing:
+
+            - "count": Counts of advances, declines, and unchanged stocks (only when symbol is None).
+            - "data": List of dictionaries with detailed stock data.
+    """
+    endpoint = "live-analysis-advance"
+    params = {"symbol": symbol} if symbol else None
+    try:
+        data = fetch_data_from_nse(endpoint, params=params)
+        if symbol:
+            return data  # Returns a list of data for the specific symbol
+        return {
+            "count": data.get("advance", {}).get("count", {}),
+            "data": data.get("advance", {}).get("data", []),
+        }
+    except Exception as e:
+        raise Exception(f"Failed to fetch advance data: {e}")
+
+
+def get_decline_data(symbol: Optional[str] = None) -> Dict:
+    """
+    Fetch data for stocks that have declined in price.
+
+    Args:
+        symbol (str, optional): The stock symbol (e.g., "INFY"). If provided, fetches data for the specific symbol.
+                               If None, fetches data for all declining stocks.
+
+    Returns:
+        Dict: A dictionary containing:
+            - "count": Counts of advances, declines, and unchanged stocks (only when symbol is None).
+            - "data": List of dictionaries with detailed stock data.
+    """
+    endpoint = "live-analysis-decline"
+    params = {"symbol": symbol} if symbol else None
+    try:
+        data = fetch_data_from_nse(endpoint, params=params)
+
+        if symbol:
+            return data  # Returns a list of data for the specific symbol
+        return {
+            "count": data.get("decline", {}).get("count", {}),
+            "data": data.get("decline", {}).get("data", []),
+        }
+    except Exception as e:
+
+        raise Exception(f"Failed to fetch decline data: {e}")
+
+
+def get_unchanged_data(symbol: Optional[str] = None) -> Dict:
+    """
+
+    Fetch data for stocks that have remained unchanged in price.
+
+    Args:
+        symbol (str, optional): The stock symbol (e.g., "INFY"). If provided, fetches data for the specific symbol.
+
+                               If None, fetches data for all unchanged stocks.
+
+    Returns:
+        Dict: A dictionary containing:
+            - "count": Counts of advances, declines, and unchanged stocks (only when symbol is None).
+            - "data": List of dictionaries with detailed stock data.
+            - "timestamp": Timestamp of the data.
+            - "message": A message indicating the status of the response (e.g., "No unchanged stocks found").
+
+    Raises:
+        Exception: If the API request fails.
+    """
+    endpoint = "live-analysis-unchanged"
+    params = {"symbol": symbol} if symbol else None
+    try:
+        data = fetch_data_from_nse(endpoint, params=params)
+        if symbol:
+            if not data:
+                return {"message": f"No unchanged data found for symbol: {symbol}"}
+            return data
+        if not data.get("Unchange", {}).get("data"):
+            return {
+                "message": "No unchanged stocks found",
+                "count": {},
+                "data": [],
+                "timestamp": data.get("timestamp", "N/A"),
+            }
+        return {
+            "count": data.get("Unchange", {}).get("count", {}),
+            "data": data.get("Unchange", {}).get("data", []),
+            "timestamp": data.get("timestamp", "N/A"),
+        }
+    except Exception as e:
+        raise Exception(f"Failed to fetch unchanged data: {e}")
+
+
 __version__ = "0.1.0"
 __all__ = [
     "get_market_status",
@@ -897,4 +999,7 @@ __all__ = [
     "get_52_week_data_by_symbol",
     "get_52_week_counts",
     "get_large_deals",
+    "get_advance_data",
+    "get_decline_data",
+    "get_unchanged_data",
 ]
