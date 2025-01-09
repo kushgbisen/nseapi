@@ -35,6 +35,8 @@ from nseapi import (
     get_advance_data,
     get_decline_data,
     get_unchanged_data,
+    get_stocks_traded,
+    get_stocks_traded_by_symbol,
 )
 
 
@@ -550,7 +552,67 @@ class TestNSEAPI(unittest.TestCase):
             self.assertIn("count", data)
             self.assertIn("data", data)
 
+    def test_get_stocks_traded(self):
+        mock_response = {
+            "total": {
+                "indetifier": "",
+                "count": {"Unchange": 0, "Advances": 0, "Total": 0, "Declines": 0},
+                "data": [
+                    {
+                        "identifier": "",
+                        "symbol": "",
+                        "series": "",
+                        "marketType": "",
+                        "pchange": 0,
+                        "change": 0,
+                        "basePrice": 0,
+                        "previousClose": 0,
+                        "lastPrice": 0,
+                        "totalTradedVolume": 0,
+                        "issuedCap": 0,
+                        "totalTradedValue": 0,
+                        "totalMarketCap": 0,
+                    }
+                ],
+            },
+            "timestamp": "",
+        }
+        with self.mock_fetch_data(mock_response):
+            data = get_stocks_traded()
+            self.assertIsInstance(data, dict)
+            self.assertIn("total", data)
+            self.assertIn("data", data["total"])
+
+    def test_get_stocks_traded_by_symbol(self):
+        mock_response = [
+            {
+                "identifier": "TCSEQN",
+                "symbol": "TCS",
+                "series": "EQ",
+                "marketType": "N",
+                "pchange": -0.8543471911206177,
+                "change": -35.099999999999454,
+                "basePrice": 4108.4,
+                "previousClose": 4108.4,
+                "lastPrice": 4073.3,
+                "totalTradedVolume": 12.60906,
+                "issuedCap": 3618087518,
+                "totalTradedValue": 516.80754222,
+                "totalMarketCap": 1473755.5887069402,
+            }
+        ]
+        with self.mock_fetch_data(mock_response):
+            data = get_stocks_traded_by_symbol("TCS")
+            self.assertIsInstance(data, list)
+            self.assertEqual(data[0]["symbol"], "TCS")
+            self.assertEqual(data[0]["lastPrice"], 4073.3)
+
+    def test_get_stocks_traded_by_symbol_invalid_symbol(self):
+        with self.mock_fetch_data([]):
+            with self.assertRaises(ValueError) as context:
+                get_stocks_traded_by_symbol("INVALID_SYMBOL")
+            self.assertIn("No data found for symbol", str(context.exception))
+
 
 if __name__ == "__main__":
-
     unittest.main()

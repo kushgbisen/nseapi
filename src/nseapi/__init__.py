@@ -6,7 +6,7 @@ import zipfile
 import os
 import gzip
 import shutil
-from typing import List, Dict, Literal, Optional
+from typing import List, Dict, Literal, Optional, Any
 from functools import lru_cache
 import logging
 from time import sleep
@@ -973,6 +973,55 @@ def get_unchanged_data(symbol: Optional[str] = None) -> Dict:
         raise Exception(f"Failed to fetch unchanged data: {e}")
 
 
+def get_stocks_traded() -> Dict[str, Any]:
+    """
+    Fetch data for all stocks traded on the NSE.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing the total count and data for all stocks traded.
+    """
+    endpoint = "live-analysis-stocksTraded"
+    try:
+        data = fetch_data_from_nse(endpoint)
+        return data
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Failed to fetch stocks traded data: {e}")
+
+
+def get_stocks_traded_by_symbol(symbol: str) -> List[Dict[str, Any]]:
+    """
+    Fetch data for a specific stock symbol traded on the NSE.
+
+
+    Args:
+        symbol (str): The stock symbol (e.g., "TCS", "INFY").
+
+    Returns:
+        List[Dict[str, Any]]: A list of dictionaries containing data for the specified stock symbol.
+
+    Raises:
+        ValueError: If the symbol is invalid or not found.
+        requests.exceptions.RequestException: If the API request fails.
+    """
+    endpoint = "live-analysis-stocksTraded"
+    params = {"symbol": symbol}
+    try:
+        data = fetch_data_from_nse(endpoint, params=params)
+
+        if not data:
+
+            raise ValueError(f"No data found for symbol: {symbol}")
+
+        return data
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 404:
+            raise ValueError(f"Invalid symbol: {symbol}")
+        raise Exception(f"Failed to fetch stocks traded data: {e}")
+
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"API request failed: {e}")
+
+
 __version__ = "0.1.0"
 __all__ = [
     "get_market_status",
@@ -1002,4 +1051,6 @@ __all__ = [
     "get_advance_data",
     "get_decline_data",
     "get_unchanged_data",
+    "get_stocks_traded",
+    "get_stocks_traded_by_symbol",
 ]

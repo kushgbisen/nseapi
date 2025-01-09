@@ -6,7 +6,6 @@ NSEAPI is a Python package designed for seamless interaction with the National S
 
 ## Table of Contents
 
-
 - [Installation](#installation)
 - [Usage](#usage)
   - [Fetching Market Status](#fetching-market-status)
@@ -27,10 +26,9 @@ NSEAPI is a Python package designed for seamless interaction with the National S
   - [Fetching Most Active Securities](#fetching-most-active-securities)
   - [Fetching Volume Gainers](#fetching-volume-gainers)
   - [Fetching Price Band Hitters](#fetching-price-band-hitters)
-
   - [Fetching 52-Week High and Low Data](#fetching-52-week-high-and-low-data)
-
   - [Fetching Advance, Decline, and Unchanged Data](#fetching-advance-decline-and-unchanged-data)
+  - [Fetching Stocks Traded Data](#fetching-stocks-traded-data)
   - [Logging](#logging)
 - [Troubleshooting](#troubleshooting)
 - [Project Structure](#project-structure)
@@ -44,14 +42,12 @@ To install the NSEAPI package, ensure that you have Python 3.8 or higher install
 
 ```bash
 pip install nseapi
-
 ```
 
 Alternatively, you can clone the repository and install it locally:
 
 ```bash
 git clone https://github.com/kushgbisen/nseapi.git
-
 cd nseapi
 pip install .
 ```
@@ -77,16 +73,14 @@ print("Market Status:", market_status)
 
 ### Downloading Bhavcopy
 
-
 The `get_bhavcopy` function downloads various types of bhavcopy reports (e.g., equity, delivery, indices, FnO, priceband, PR, CM MII) for a specific date. The file is saved in the specified directory.
 
 ```python
-
 from nseapi import get_bhavcopy
 from datetime import datetime
 
 # Download equity bhavcopy
-date = datetime(2023, 12, 26)
+date = datetime(2025, 1, 1)
 get_bhavcopy("equity", date, download_dir='downloads')
 
 # Download FnO bhavcopy
@@ -126,11 +120,9 @@ option_chain = get_option_chain(symbol)
 print("Option Chain for RELIANCE:", option_chain)
 
 # For an index
-
 symbol = "NIFTY"
 option_chain = get_option_chain(symbol, is_index=True)
 print("Option Chain for NIFTY:", option_chain)
-
 ```
 
 ---
@@ -156,9 +148,7 @@ actions = get_corporate_actions(
     from_date=from_date,
     to_date=to_date
 )
-
 print("Filtered Corporate Actions:", actions)
-
 ```
 
 ---
@@ -173,7 +163,6 @@ from datetime import datetime
 
 # Fetch corporate announcements for equities
 announcements = get_announcements(index="equities")
-
 print("Corporate Announcements:", announcements)
 
 # Fetch corporate announcements for a specific symbol and date range
@@ -185,7 +174,6 @@ announcements = get_announcements(
     from_date=from_date,
     to_date=to_date
 )
-
 print("Filtered Corporate Announcements:", announcements)
 ```
 
@@ -202,7 +190,6 @@ indices = get_all_indices()
 print("All Indices:", indices)
 ```
 
-
 ---
 
 ### Fetching All Indices Performance
@@ -210,15 +197,12 @@ print("All Indices:", indices)
 The `get_all_indices_performance` function fetches performance data for all NSE indices, including the last price, percentage change, advances, declines, and historical data points.
 
 ```python
-
 from nseapi import get_all_indices_performance
 
 # Fetch performance data for all indices
 indices_performance = get_all_indices_performance()
-
 print("All Indices Performance:", indices_performance)
 ```
-
 
 ---
 
@@ -240,24 +224,19 @@ print("Clearing Holidays:", clearing_holidays)
 
 ---
 
-
 ### Fetching Bulk Deals
 
 The `bulk_deals` function fetches bulk deals data for a specified date range.
 
-
 ```python
 from nseapi import bulk_deals
-
 from datetime import datetime
-
 
 from_date = datetime(2023, 1, 1)
 to_date = datetime(2023, 12, 31)
 bulk_deals_data = bulk_deals(from_date, to_date)
 print("Bulk Deals:", bulk_deals_data)
 ```
-
 
 ---
 
@@ -268,24 +247,12 @@ The `get_large_deals` function fetches bulk deals, short deals, and block deals 
 ```python
 from nseapi import get_large_deals
 
-
 # Fetch large deals data
 large_deals_data = get_large_deals()
 print("Large Deals Data:", large_deals_data)
 ```
 
-The response includes:
-- **as_on_date**: The date for which the data is fetched.
-- **bulk_deals**: List of bulk deals with details like symbol, client name, quantity, and WATP.
-
-- **short_deals**: List of short deals with details like symbol, quantity, and WATP.
-- **block_deals**: List of block deals with details like symbol, client name, quantity, and WATP.
-- **total_bulk_deals**: Total number of bulk deals.
-- **total_short_deals**: Total number of short deals.
-- **total_block_deals**: Total number of block deals.
-
 ---
-
 
 ### Fetching FII/DII Trading Activity
 
@@ -299,7 +266,6 @@ fii_dii_data = get_fii_dii_data()
 print("FII/DII Trading Activity:", fii_dii_data)
 ```
 
-
 ---
 
 ### Fetching Top Gainers
@@ -312,7 +278,6 @@ from nseapi import get_top_gainers
 # Fetch top gainers
 top_gainers = get_top_gainers()
 print("Top Gainers:", top_gainers)
-
 ```
 
 ---
@@ -322,14 +287,11 @@ print("Top Gainers:", top_gainers)
 The `get_top_losers` function fetches the top losers data from NSE.
 
 ```python
-
 from nseapi import get_top_losers
 
 # Fetch top losers
-
 top_losers = get_top_losers()
 print("Top Losers:", top_losers)
-
 ```
 
 ---
@@ -338,28 +300,22 @@ print("Top Losers:", top_losers)
 
 The `get_regulatory_status` function fetches the regulatory module status from NSE.
 
-
 ```python
 from nseapi import get_regulatory_status
 
 # Fetch regulatory status
 regulatory_status = get_regulatory_status()
-
 print("Regulatory Status:", regulatory_status)
 ```
 
 ---
 
-
 ### Fetching Most Active Securities
-
 
 The `get_most_active_equities`, `get_most_active_sme`, and `get_most_active_etf` functions fetch the most actively traded securities (equities, SMEs, and ETFs) based on volume or value.
 
 ```python
-
 from nseapi import (
-
     get_most_active_equities,
     get_most_active_sme,
     get_most_active_etf,
@@ -370,10 +326,8 @@ most_active_equities_volume = get_most_active_equities("volume")
 print("Most Active Equities by Volume:", most_active_equities_volume)
 
 # Fetch most active equities by value
-
 most_active_equities_value = get_most_active_equities("value")
 print("Most Active Equities by Value:", most_active_equities_value)
-
 
 # Fetch most active SMEs by volume
 most_active_sme_volume = get_most_active_sme("volume")
@@ -392,14 +346,11 @@ most_active_etf_value = get_most_active_etf("value")
 print("Most Active ETFs by Value:", most_active_etf_value)
 ```
 
-
 ---
 
 ### Fetching Volume Gainers
 
-
 The `get_volume_gainers` function fetches the list of securities with the highest volume gain compared to their average volume.
-
 
 ```python
 from nseapi import get_volume_gainers
@@ -418,11 +369,9 @@ The `get_price_band_hitters` function fetches stocks that have hit their upper, 
 ```python
 from nseapi import get_price_band_hitters
 
-
 # Fetch upper price band hitters for all securities
 upper_hitters = get_price_band_hitters(band_type="upper", category="AllSec")
 print("Upper Price Band Hitters:", upper_hitters)
-
 
 # Fetch lower price band hitters for securities with price band < 20%
 lower_hitters = get_price_band_hitters(band_type="lower", category="SecLwr20")
@@ -431,7 +380,6 @@ print("Lower Price Band Hitters (SecLwr20):", lower_hitters)
 # Fetch counts for stocks hitting both upper and lower price bands
 both_hitters = get_price_band_hitters(band_type="both")
 print("Both Price Band Hitters:", both_hitters)
-
 ```
 
 ---
@@ -451,7 +399,6 @@ print("Timestamp:", high_data["timestamp"])
 # Fetch 52-week low data
 low_data = get_52_week_low()
 print("52-Week Low Data:", low_data["data"])
-
 print("Timestamp:", low_data["timestamp"])
 
 # Fetch counts of stocks hitting 52-week highs and lows
@@ -465,11 +412,9 @@ symbol_data = get_52_week_data_by_symbol(symbol)
 print("52-Week Data for INFY:", symbol_data)
 ```
 
-
 ---
 
 ### Fetching Advance, Decline, and Unchanged Data
-
 
 The `get_advance_data`, `get_decline_data`, and `get_unchanged_data` functions fetch data for stocks that have advanced, declined, or remained unchanged in price, respectively. You can optionally specify a symbol to fetch data for a specific stock.
 
@@ -477,20 +422,98 @@ The `get_advance_data`, `get_decline_data`, and `get_unchanged_data` functions f
 from nseapi import get_advance_data, get_decline_data, get_unchanged_data
 
 # Fetch all advancing stocks
-
 advance_data = get_advance_data()
 print("Advance Data:", advance_data)
-
 
 # Fetch decline data for a specific symbol
 decline_data = get_decline_data(symbol="INFY")
 print("Decline Data for INFY:", decline_data)
 
 # Fetch unchanged data
-
 unchanged_data = get_unchanged_data()
 print("Unchanged Data:", unchanged_data)
+```
 
+---
+
+### Fetching Stocks Traded Data
+
+The `get_stocks_traded` function fetches data for all stocks traded on the NSE, including details like symbol, series, last price, percentage change, market cap, traded volume, and traded value.
+
+```python
+from nseapi import get_stocks_traded
+
+# Fetch data for all stocks traded
+stocks_traded = get_stocks_traded()
+
+print("Stocks Traded Data:", stocks_traded)
+```
+
+The `get_stocks_traded_by_symbol` function fetches data for a specific stock symbol.
+
+```python
+from nseapi import get_stocks_traded_by_symbol
+
+# Fetch data for a specific stock symbol
+symbol = "TCS"
+stocks_traded = get_stocks_traded_by_symbol(symbol)
+
+print(f"Stocks Traded Data for {symbol}:", stocks_traded)
+```
+
+#### Example Output for `get_stocks_traded`:
+```python
+{
+    "total": {
+        "indetifier": "",
+        "count": {
+            "Unchange": 0,
+            "Advances": 0,
+            "Total": 0,
+            "Declines": 0
+        },
+        "data": [
+            {
+                "identifier": "TCSEQN",
+                "symbol": "TCS",
+                "series": "EQ",
+                "marketType": "N",
+                "pchange": -0.8543471911206177,
+                "change": -35.099999999999454,
+                "basePrice": 4108.4,
+                "previousClose": 4108.4,
+                "lastPrice": 4073.3,
+                "totalTradedVolume": 12.60906,
+                "issuedCap": 3618087518,
+                "totalTradedValue": 516.80754222,
+                "totalMarketCap": 1473755.5887069402
+            },
+            # More stocks...
+        ]
+    },
+    "timestamp": "2024-01-01T12:34:56Z"
+}
+```
+
+#### Example Output for `get_stocks_traded_by_symbol`:
+```python
+[
+    {
+        "identifier": "TCSEQN",
+        "symbol": "TCS",
+        "series": "EQ",
+        "marketType": "N",
+        "pchange": -0.8543471911206177,
+        "change": -35.099999999999454,
+        "basePrice": 4108.4,
+        "previousClose": 4108.4,
+        "lastPrice": 4073.3,
+        "totalTradedVolume": 12.60906,
+        "issuedCap": 3618087518,
+        "totalTradedValue": 516.80754222,
+        "totalMarketCap": 1473755.5887069402
+    }
+]
 ```
 
 ---
@@ -499,14 +522,11 @@ print("Unchanged Data:", unchanged_data)
 
 The package includes built-in logging functionality that tracks API interactions:
 
-
 - **Debug level:** Records API request attempts.
-
 - **Info level:** Logs successful responses.
 - **Error level:** Captures failed requests with details.
 
 Logs are written to `nseapi.log` in the current working directory. Example log output:
-
 
 ```
 2024-12-27 06:53:03 - INFO - Successfully fetched data from marketStatus
@@ -529,12 +549,10 @@ Logs are written to `nseapi.log` in the current working directory. Example log o
 
 The project is organized as follows:
 
-
 ```
 ./
 ├── .gitignore                # Specifies files and directories to ignore in Git
 ├── .pre-commit-config.yaml   # Configuration for pre-commit hooks
-
 ├── LICENSE                   # License file for the project (MIT License)
 ├── README.md                 # Project documentation
 ├── requirements.txt          # Lists project dependencies
