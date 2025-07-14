@@ -104,12 +104,9 @@ def get_market_status() -> Dict:
     Returns:
         Dict: A dictionary containing the market status.
     """
-    url = "https://www.nseindia.com/api/marketStatus"
-
+    endpoint = "marketStatus"
     try:
-        response = session.get(url, cookies=_fetch_cookies())
-        response.raise_for_status()
-        return response.json()
+        return fetch_data_from_nse(endpoint)
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch market status: {e}")
 
@@ -248,36 +245,36 @@ def get_stock_quote(symbol: str) -> Dict:
         ValueError: If the symbol is invalid or not found.
         requests.exceptions.RequestException: If the API request fails.
     """
-    url = f"https://www.nseindia.com/api/quote-equity?symbol={symbol}"
+    endpoint = "quote-equity"
+    params = {"symbol": symbol}
     try:
-        response = session.get(url, cookies=_fetch_cookies())
+        data = fetch_data_from_nse(endpoint, params=params)
 
-        response.raise_for_status()
-        data = response.json()
-
+        # Handle None response (invalid symbol case)
+        if data is None:
+            raise ValueError(f"Invalid symbol: {symbol}")
+        
         if not data.get("info", {}).get("symbol"):
-
             raise ValueError(f"Invalid symbol: {symbol}")
 
         return {
             "symbol": data["info"]["symbol"],
-            "company_name": data["info"]["companyName"],
+            "company_name": data["info"].get("companyName", "N/A"),
             "current_price": data["priceInfo"]["lastPrice"],
-            "open": data["priceInfo"]["open"],
-            "high": data["priceInfo"]["intraDayHighLow"]["max"],
-            "low": data["priceInfo"]["intraDayHighLow"]["min"],
-            "close": data["priceInfo"]["close"],
-            "volume": data["preOpenMarket"]["totalTradedVolume"],
-            "52_week_high": data["priceInfo"]["weekHighLow"]["max"],
-            "52_week_low": data["priceInfo"]["weekHighLow"]["min"],
-            "market_cap": data["securityInfo"].get("issuedSize", "N/A"),
+            "open": data["priceInfo"].get("open", 0),
+            "high": data["priceInfo"].get("intraDayHighLow", {}).get("max", 0),
+            "low": data["priceInfo"].get("intraDayHighLow", {}).get("min", 0),
+            "close": data["priceInfo"].get("close", 0),
+            "volume": data.get("preOpenMarket", {}).get("totalTradedVolume", 0),
+            "52_week_high": data["priceInfo"].get("weekHighLow", {}).get("max", 0),
+            "52_week_low": data["priceInfo"].get("weekHighLow", {}).get("min", 0),
+            "market_cap": data.get("securityInfo", {}).get("issuedSize", "N/A"),
         }
     except requests.exceptions.HTTPError as e:
-        if response.status_code == 404:
+        if e.response and e.response.status_code == 404:
             raise ValueError(f"Invalid symbol: {symbol}")
         raise Exception(f"Failed to fetch stock quote: {e}")
     except requests.exceptions.RequestException as e:
-
         raise Exception(f"API request failed: {e}")
 
 
@@ -297,19 +294,21 @@ def get_option_chain(symbol: str, is_index: bool = False) -> Dict:
         requests.exceptions.RequestException: If the API request fails.
     """
     endpoint = "option-chain-indices" if is_index else "option-chain-equities"
-    url = f"https://www.nseindia.com/api/{endpoint}?symbol={symbol}"
+    params = {"symbol": symbol}
 
     try:
-        response = session.get(url, cookies=_fetch_cookies())
-        response.raise_for_status()
-        data = response.json()
+        data = fetch_data_from_nse(endpoint, params=params)
 
+        # Handle None response (invalid symbol case)
+        if data is None:
+            raise ValueError(f"Invalid symbol: {symbol}")
+        
         if not data.get("records"):
             raise ValueError(f"Invalid symbol: {symbol}")
 
         return data
     except requests.exceptions.HTTPError as e:
-        if response.status_code == 404:
+        if e.response and e.response.status_code == 404:
             raise ValueError(f"Invalid symbol: {symbol}")
         raise Exception(f"Failed to fetch option chain: {e}")
     except requests.exceptions.RequestException as e:
@@ -326,11 +325,9 @@ def get_all_indices() -> List[Dict]:
     Raises:
         requests.exceptions.RequestException: If the API request fails.
     """
-    url = "https://www.nseindia.com/api/allIndices"
+    endpoint = "allIndices"
     try:
-        response = session.get(url, cookies=_fetch_cookies())
-        response.raise_for_status()
-        data = response.json()
+        data = fetch_data_from_nse(endpoint)
 
         indices = []
         for index in data.get("data", []):
@@ -374,7 +371,7 @@ def get_corporate_actions(
     Raises:
         ValueError: If `from_date` is greater than `to_date`.
     """
-    url = "https://www.nseindia.com/api/corporates-corporateActions"
+    endpoint = "corporates-corporateActions"
     params = {"index": segment}
     if symbol:
         params["symbol"] = symbol
@@ -389,9 +386,7 @@ def get_corporate_actions(
         )
 
     try:
-        response = session.get(url, params=params, cookies=_fetch_cookies())
-        response.raise_for_status()
-        return response.json()
+        return fetch_data_from_nse(endpoint, params=params)
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch corporate actions: {e}")
 
@@ -421,7 +416,7 @@ def get_announcements(
 
         ValueError: If `from_date` is greater than `to_date`.
     """
-    url = "https://www.nseindia.com/api/corporate-announcements"
+    endpoint = "corporate-announcements"
     params = {"index": index}
 
     if symbol:
@@ -440,9 +435,7 @@ def get_announcements(
         )
 
     try:
-        response = session.get(url, params=params, cookies=_fetch_cookies())
-        response.raise_for_status()
-        return response.json()
+        return fetch_data_from_nse(endpoint, params=params)
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch corporate announcements: {e}")
 
@@ -480,13 +473,19 @@ def bulk_deals(from_date: datetime, to_date: datetime) -> List[Dict]:
     if (to_date - from_date).days > 365:
         raise ValueError("The date range cannot exceed one year.")
 
-    url = f"https://www.nseindia.com/api/historical/bulk-deals?from={from_date.strftime('%d-%m-%Y')}&to={to_date.strftime('%d-%m-%Y')}"
+    endpoint = "historical/bulk-deals"
+    params = {
+        "from": from_date.strftime('%d-%m-%Y'),
+        "to": to_date.strftime('%d-%m-%Y')
+    }
 
     try:
-        response = session.get(url, cookies=_fetch_cookies())
-        response.raise_for_status()
-        data = response.json()
+        data = fetch_data_from_nse(endpoint, params=params)
 
+        # Handle case where data is already a list (mocked response)
+        if isinstance(data, list):
+            return data
+        
         if not data.get("data"):
             raise RuntimeError(
                 "No bulk deals data available for the specified date range."
