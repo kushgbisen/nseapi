@@ -1057,6 +1057,47 @@ def _split_date_range(
     return chunks
 
 
+def get_symbol_lookup(query: str) -> Dict:
+    """
+    Search for stock symbols by company name or look up company name by stock symbol.
+    
+    Args:
+        query (str): Company name or stock symbol to search for
+        
+    Returns:
+        Dict: Dictionary containing search results with 'symbols' key containing list of matches
+        
+    Raises:
+        ValueError: If query is empty or invalid
+        Exception: If API request fails
+        
+    Example:
+        >>> result = get_symbol_lookup("hdfc bank")
+        >>> print(result['symbols'][0]['symbol'])  # 'HDFCBANK'
+        >>> print(result['symbols'][0]['symbol_info'])  # 'HDFC Bank Limited'
+    """
+    if not query or not query.strip():
+        raise ValueError("Query cannot be empty")
+    
+    endpoint = "search/autocomplete"
+    params = {"q": query.strip()}
+    
+    try:
+        data = fetch_data_from_nse(endpoint, params=params)
+        
+        if not data:
+            return {"symbols": []}
+        
+        # Ensure we return a consistent structure
+        if "symbols" not in data:
+            data["symbols"] = []
+            
+        return data
+        
+    except Exception as e:
+        raise Exception(f"Failed to search for symbol '{query}': {e}")
+
+
 def get_historical_equity_data(
     symbol: str,
     from_date: Optional[date] = None,
@@ -1180,5 +1221,6 @@ __all__ = [
     "get_unchanged_data",
     "get_stocks_traded",
     "get_stocks_traded_by_symbol",
+    "get_symbol_lookup",
     "get_historical_equity_data",
 ]
