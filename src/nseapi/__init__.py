@@ -1057,6 +1057,92 @@ def _split_date_range(
     return chunks
 
 
+def get_historical_index_data(
+    index: str,
+    from_date: Optional[date] = None,
+    to_date: Optional[date] = None,
+) -> Dict[str, List[Dict]]:
+    """
+    Download historical index data within a given date range.
+    
+    Returns both price and turnover data for the specified index.
+    
+    Args:
+        index (str): Index name (e.g., "NIFTY 50", "NIFTY BANK", "NIFTY IT")
+        from_date (date, optional): Start date. Defaults to 30 days before to_date.
+        to_date (date, optional): End date. Defaults to today.
+        
+    Returns:
+        Dict[str, List[Dict]]: Dictionary with 'price' and 'turnover' keys containing historical data
+        
+    Raises:
+        ValueError: If from_date > to_date or invalid parameters
+        TypeError: If date parameters are not date objects
+        Exception: If API request fails
+        
+    Example:
+        >>> data = get_historical_index_data("NIFTY 50")
+        >>> print(len(data['price']))     # Number of price records
+        >>> print(data['price'][0].keys()) # Available fields in price data
+    """
+    if not index or not index.strip():
+        raise ValueError("Index name cannot be empty")
+    
+    # Validate date parameters
+    if from_date and not isinstance(from_date, date):
+        raise TypeError("from_date must be a datetime.date object")
+    if to_date and not isinstance(to_date, date):
+        raise TypeError("to_date must be a datetime.date object")
+        
+    # Set default dates
+    if not to_date:
+        to_date = date.today()
+    if not from_date:
+        from_date = to_date - timedelta(days=30)
+        
+    if from_date > to_date:
+        raise ValueError("from_date cannot be greater than to_date")
+    
+    # Split into chunks for large date ranges
+    date_chunks = _split_date_range(from_date, to_date, max_chunk_size=365)
+    all_price_data = []
+    all_turnover_data = []
+    
+    for chunk_start, chunk_end in date_chunks:
+        endpoint = "historical/indicesHistory"
+        params = {
+            "indexType": index.upper(),
+            "from": chunk_start.strftime("%d-%m-%Y"),
+            "to": chunk_end.strftime("%d-%m-%Y")
+        }
+        
+        try:
+            logger.debug(f"Fetching index data for {index} from {chunk_start} to {chunk_end}")
+            response = fetch_data_from_nse(endpoint, params=params)
+            
+            if response and "data" in response:
+                data = response["data"]
+                
+                # Extract price and turnover data
+                if "indexCloseOnlineRecords" in data:
+                    all_price_data.extend(data["indexCloseOnlineRecords"])
+                    
+                if "indexTurnoverRecords" in data:
+                    all_turnover_data.extend(data["indexTurnoverRecords"])
+            
+        except Exception as e:
+            logger.warning(f"Failed to fetch index data chunk for {index}: {e}")
+            continue
+    
+    if not all_price_data and not all_turnover_data:
+        raise Exception(f"No historical data found for index: {index}")
+        
+    return {
+        "price": all_price_data,
+        "turnover": all_turnover_data
+    }
+
+
 def get_equity_metadata(symbol: str) -> Dict:
     """
     Get detailed metadata information for an equity symbol.
@@ -1270,4 +1356,5 @@ __all__ = [
     "get_equity_metadata",
     "get_symbol_lookup",
     "get_historical_equity_data",
+    "get_historical_index_data",
 ]
