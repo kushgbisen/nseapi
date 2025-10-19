@@ -1057,6 +1057,52 @@ def _split_date_range(
     return chunks
 
 
+def get_equity_metadata(symbol: str) -> Dict:
+    """
+    Get detailed metadata information for an equity symbol.
+    
+    Provides comprehensive information including company name, industry, ISIN code,
+    current status, market segment, and other metadata.
+    
+    Args:
+        symbol (str): Stock symbol (e.g., "HDFCBANK", "TCS", "RELIANCE")
+        
+    Returns:
+        Dict: Dictionary containing detailed equity metadata
+        
+    Raises:
+        ValueError: If symbol is empty or invalid
+        Exception: If API request fails
+        
+    Example:
+        >>> metadata = get_equity_metadata("HDFCBANK")
+        >>> print(metadata['companyName'])  # 'HDFC Bank Limited'
+        >>> print(metadata['industry'])     # 'Private Sector Bank'
+    """
+    if not symbol or not symbol.strip():
+        raise ValueError("Symbol cannot be empty")
+    
+    endpoint = "equity-meta-info"
+    params = {"symbol": symbol.strip().upper()}
+    
+    try:
+        data = fetch_data_from_nse(endpoint, params=params)
+        
+        if not data:
+            raise ValueError(f"No metadata found for symbol: {symbol}")
+        
+        # Check if we got valid data by looking for key fields
+        if not data.get("symbol") or not data.get("companyName"):
+            raise ValueError(f"Invalid or delisted symbol: {symbol}")
+            
+        return data
+        
+    except Exception as e:
+        if "404" in str(e) or "not found" in str(e).lower():
+            raise ValueError(f"Symbol not found: {symbol}")
+        raise Exception(f"Failed to fetch metadata for '{symbol}': {e}")
+
+
 def get_symbol_lookup(query: str) -> Dict:
     """
     Search for stock symbols by company name or look up company name by stock symbol.
@@ -1221,6 +1267,7 @@ __all__ = [
     "get_unchanged_data",
     "get_stocks_traded",
     "get_stocks_traded_by_symbol",
+    "get_equity_metadata",
     "get_symbol_lookup",
     "get_historical_equity_data",
 ]
