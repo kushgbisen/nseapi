@@ -1,12 +1,13 @@
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from pathlib import Path
 import requests
 import zipfile
+import json
 
 import os
 import gzip
 import shutil
-from typing import List, Dict, Literal, Optional, Any
+from typing import List, Dict, Literal, Optional, Any, Tuple
 from functools import lru_cache
 import logging
 from time import sleep
@@ -16,11 +17,11 @@ session = requests.Session()
 
 session.headers.update(
     {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/118.0",
         "Accept": "*/*",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Referer": "https://www.nseindia.com/",
-        "Origin": "https://www.nseindia.com",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate",
+        "Referer": "https://www.nseindia.com/get-quotes/equity?symbol=HDFCBANK",
     }
 )
 
@@ -39,8 +40,8 @@ if not logger.handlers:
 
 # Fetch cookies required for API access
 def _fetch_cookies():
-    session.get("https://www.nseindia.com/")
-
+    # Get cookies from option-chain page as it sets the required cookies for equity APIs
+    session.get("https://www.nseindia.com/option-chain")
     return session.cookies
 
 
@@ -50,42 +51,37 @@ def fetch_data_from_nse(endpoint, params=None, retries=3, delay=2, timeout=10):
     Args:
         endpoint (str): The API endpoint to fetch data from.
         params (dict, optional): Query parameters for the request. Defaults to None.
-
         retries (int, optional): Number of retry attempts. Defaults to 3.
         delay (int, optional): Delay between retries in seconds. Defaults to 2.
-
         timeout (int, optional): Timeout for the request in seconds. Defaults to 10.
 
     Returns:
-
         dict: JSON response from the API.
 
     Raises:
         requests.RequestException: If the request fails after all retries.
-
     """
     base_url = "https://www.nseindia.com/api"
     url = f"{base_url}/{endpoint}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/118.0"
-    }
 
     for attempt in range(retries):
-
         try:
-
             logger.debug(f"Attempt {attempt + 1}: Making request to: {url}")
+            
+            # Refresh cookies on first attempt or after failure
+            if attempt == 0 or attempt > 0:
+                _fetch_cookies()
+            
             response = session.get(
                 url,
-                headers=headers,
                 params=params,
                 timeout=timeout,
-                cookies=_fetch_cookies(),
             )
             response.raise_for_status()
 
             logger.info(f"Successfully fetched data from {endpoint}")
             return response.json()
+            
         except requests.RequestException as e:
             logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
             if attempt < retries - 1:
@@ -1022,6 +1018,138 @@ def get_stocks_traded_by_symbol(symbol: str) -> List[Dict[str, Any]]:
 
 
 __version__ = "0.1.0"
+def _split_date_range(
+    from_date: date, to_date: date, max_chunk_size: int = 100
+) -> List[Tuple[date, date]]:
+    """
+    Split a date range into smaller chunks for API requests.
+    
+    Args:
+        from_date (date): The starting date of the range
+        to_date (date): The ending date of the range  
+        max_chunk_size (int): Maximum days per chunk. Defaults to 100.
+        
+    Returns:
+        List[Tuple[date, date]]: List of date range tuples
+        
+    Raises:
+        ValueError: If from_date is greater than to_date
+    """
+    if from_date > to_date:
+        raise ValueError("from_date cannot be greater than to_date")
+    
+    chunks = []
+    current_start = from_date
+    
+    while current_start <= to_date:
+        # Calculate end of current chunk (inclusive)
+        current_end = current_start + timedelta(days=max_chunk_size - 1)
+        
+        # Don't exceed the final date
+        if current_end > to_date:
+            current_end = to_date
+            
+        chunks.append((current_start, current_end))
+        
+        # Start next chunk the day after current end
+        current_start = current_end + timedelta(days=1)
+        
+    return chunks
+
+
+def get_historical_equity_data(
+    symbol: str,
+    from_date: Optional[date] = None,
+    to_date: Optional[date] = None,
+    series: List[str] = None
+) -> List[Dict]:
+    """
+    Download historical daily price and volume data for a specific equity symbol.
+    
+    Args:
+        symbol (str): Stock symbol (e.g., "HDFCBANK", "TCS", "RELIANCE")
+        from_date (date, optional): Start date. Defaults to 30 days before to_date.
+        to_date (date, optional): End date. Defaults to today.
+        series (List[str], optional): Series to fetch (e.g., ["EQ"]). Defaults to ["EQ"].
+        
+    Returns:
+        List[Dict]: List of historical data records with OHLCV data
+        
+    Raises:
+        ValueError: If from_date > to_date or invalid parameters
+        TypeError: If date parameters are not date objects
+        Exception: If API request fails
+    """
+    if series is None:
+        series = ["EQ"]
+        
+    # Validate date parameters
+    if from_date and not isinstance(from_date, date):
+        raise TypeError("from_date must be a datetime.date object")
+    if to_date and not isinstance(to_date, date):
+        raise TypeError("to_date must be a datetime.date object")
+        
+    # Set default dates
+    if not to_date:
+        to_date = date.today()
+    if not from_date:
+        from_date = to_date - timedelta(days=30)
+        
+    if from_date > to_date:
+        raise ValueError("from_date cannot be greater than to_date")
+    
+    # Simple case - use basic endpoint for EQ series with recent data
+    if series == ["EQ"] and (to_date - from_date).days <= 30:
+        endpoint = "historical/cm/equity"
+        params = {"symbol": symbol.upper()}
+        try:
+            data = fetch_data_from_nse(endpoint, params=params)
+            if data and "data" in data:
+                all_records = data["data"]
+                # Filter by date range if specific dates were provided
+                if from_date and to_date:
+                    filtered_records = []
+                    for record in all_records:
+                        record_date = datetime.strptime(record["mTIMESTAMP"], "%d-%b-%Y").date()
+                        if from_date <= record_date <= to_date:
+                            filtered_records.append(record)
+                    return filtered_records[::-1]  # Reverse for chronological order
+                return all_records[::-1]
+        except Exception as e:
+            logger.warning(f"Simple endpoint failed for {symbol}: {e}")
+    
+    # For longer date ranges, split into chunks
+    date_chunks = _split_date_range(from_date, to_date, max_chunk_size=100)
+    all_data = []
+    
+    for chunk_start, chunk_end in date_chunks:
+        endpoint = "historical/cm/equity"
+        params = {
+            "symbol": symbol.upper(),
+            "series": json.dumps(series),
+            "from": chunk_start.strftime("%d-%m-%Y"),
+            "to": chunk_end.strftime("%d-%m-%Y")
+        }
+        
+        try:
+            logger.debug(f"Fetching data for {symbol} from {chunk_start} to {chunk_end}")
+            response = fetch_data_from_nse(endpoint, params=params)
+            
+            if response and "data" in response:
+                # Add data in reverse order to maintain chronological order
+                chunk_data = list(reversed(response["data"]))
+                all_data.extend(chunk_data)
+            
+        except Exception as e:
+            logger.warning(f"Failed to fetch data chunk for {symbol}: {e}")
+            continue
+    
+    if not all_data:
+        raise Exception(f"No historical data found for symbol: {symbol}")
+        
+    return all_data
+
+
 __all__ = [
     "get_market_status",
     "get_bhavcopy",
@@ -1052,4 +1180,5 @@ __all__ = [
     "get_unchanged_data",
     "get_stocks_traded",
     "get_stocks_traded_by_symbol",
+    "get_historical_equity_data",
 ]
