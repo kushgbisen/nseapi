@@ -1057,6 +1057,73 @@ def _split_date_range(
     return chunks
 
 
+def get_fno_lot_sizes() -> Dict[str, int]:
+    """
+    Get the lot sizes of F&O (Futures & Options) stocks.
+    
+    Returns a dictionary mapping stock symbols to their respective lot sizes
+    for derivatives trading.
+    
+    Returns:
+        Dict[str, int]: Dictionary with symbol codes as keys and lot sizes as values
+        
+    Raises:
+        Exception: If API request fails or data cannot be parsed
+        
+    Example:
+        >>> lot_sizes = get_fno_lot_sizes()
+        >>> print(lot_sizes['HDFCBANK'])  # 550 (example lot size)
+        >>> print(lot_sizes['RELIANCE'])  # 250 (example lot size)
+    """
+    try:
+        # F&O lot sizes are available from NSE archives
+        url = "https://nsearchives.nseindia.com/content/fo/fo_mktlots.csv"
+        
+        # Make direct request to get CSV data
+        response = session.get(url, timeout=10)
+        response.raise_for_status()
+        
+        content = response.content
+        if not content:
+            raise Exception("No data received from F&O lot sizes endpoint")
+        
+        # Parse CSV content
+        lot_sizes = {}
+        lines = content.strip().split(b"\n")
+        
+        # Skip header line and process data
+        for line in lines[1:]:  # Skip first line (header)
+            if not line.strip():
+                continue
+                
+            try:
+                # CSV format: UNDERLYING,SYMBOL,LOT_SIZE,TICK_SIZE,etc
+                parts = line.split(b",")
+                if len(parts) >= 3:
+                    underlying = parts[0].strip().decode('utf-8')
+                    lot_size_str = parts[2].strip().decode('utf-8')
+                    
+                    # Convert to integer
+                    lot_size = int(lot_size_str)
+                    
+                    # Use underlying (cleaner symbol) as key
+                    clean_symbol = underlying.replace('-', '').replace('_', '')
+                    lot_sizes[clean_symbol] = lot_size
+                    
+            except (ValueError, UnicodeDecodeError, IndexError):
+                # Skip malformed lines
+                continue
+        
+        if not lot_sizes:
+            raise Exception("No valid lot size data found")
+            
+        logger.info(f"Successfully fetched lot sizes for {len(lot_sizes)} F&O symbols")
+        return lot_sizes
+        
+    except Exception as e:
+        raise Exception(f"Failed to fetch F&O lot sizes: {e}")
+
+
 def get_historical_index_data(
     index: str,
     from_date: Optional[date] = None,
@@ -1357,4 +1424,5 @@ __all__ = [
     "get_symbol_lookup",
     "get_historical_equity_data",
     "get_historical_index_data",
+    "get_fno_lot_sizes",
 ]
