@@ -1,3 +1,4 @@
 requests
 rich
 flask
+pytest
