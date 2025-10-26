@@ -40,6 +40,14 @@ if not logger.handlers:
 
 # Fetch cookies required for API access
 def _fetch_cookies():
+    """Fetch and return cookies from NSE website for API authentication.
+    
+    This internal function makes a request to the NSE option-chain page
+    to obtain the necessary session cookies required for subsequent API calls.
+    
+    Returns:
+        requests.cookies.RequestsCookieJar: Session cookies for NSE API access
+    """
     # Get cookies from option-chain page as it sets the required cookies for equity APIs
     session.get("https://www.nseindia.com/option-chain")
     return session.cookies
