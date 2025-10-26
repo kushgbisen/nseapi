@@ -126,7 +126,8 @@ def get_bhavcopy(
 
     Args:
 
-        bhavcopy_type: Type of bhavcopy to download. Options: "equity", "delivery", "indices", "fno", "priceband", "pr", "cm_mii".
+        bhavcopy_type: Type of bhavcopy to download. Options: "equity", "delivery", 
+                     "indices", "fno", "priceband", "pr", "cm_mii".
         date: The date for which to download the bhavcopy.
 
         download_dir: Directory to save the file. Defaults to the current directory.
@@ -145,16 +146,20 @@ def get_bhavcopy(
     # Define URLs for each bhavcopy type
     if bhavcopy_type == "equity":
         if date.year >= 2024:
-            url = f"https://nsearchives.nseindia.com/content/cm/BhavCopy_NSE_CM_0_0_0_{date.strftime('%Y%m%d')}_F_0000.csv.zip"
+            url = (f"https://nsearchives.nseindia.com/content/cm/"
+                   f"BhavCopy_NSE_CM_0_0_0_{date.strftime('%Y%m%d')}_F_0000.csv.zip")
         else:
-            url = f"https://nsearchives.nseindia.com/content/historical/EQUITIES/{date.strftime('%Y')}/{date.strftime('%b').upper()}/cm{date.strftime('%d%b%Y').upper()}bhav.csv.zip"
+            url = (f"https://nsearchives.nseindia.com/content/historical/"
+                   f"EQUITIES/{date.strftime('%Y')}/{date.strftime('%b').upper()}/"
+                   f"cm{date.strftime('%d%b%Y').upper()}bhav.csv.zip")
     elif bhavcopy_type == "delivery":
         url = f"https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_{date.strftime('%d%m%Y')}.csv"
     elif bhavcopy_type == "indices":
 
         url = f"https://www1.nseindia.com/content/indices/ind_close_all_{date.strftime('%d%m%Y')}.csv"
     elif bhavcopy_type == "fno":
-        url = f"https://nsearchives.nseindia.com/content/fo/BhavCopy_NSE_FO_0_0_0_{date.strftime('%Y%m%d')}_F_0000.csv.zip"
+        url = (f"https://nsearchives.nseindia.com/content/fo/"
+               f"BhavCopy_NSE_FO_0_0_0_{date.strftime('%Y%m%d')}_F_0000.csv.zip")
     elif bhavcopy_type == "priceband":
         url = f"https://nsearchives.nseindia.com/content/equities/sec_list_{date.strftime('%d%m%Y')}.csv"
     elif bhavcopy_type == "pr":
