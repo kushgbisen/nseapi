@@ -514,6 +514,12 @@ def get_holidays(
 
 def bulk_deals(from_date: datetime, to_date: datetime) -> List[Dict]:
     """Download the bulk deals report for the specified date range."""
+    # Handle None values by setting default date range
+    if from_date is None or to_date is None:
+        # Default to last 30 days if no dates provided
+        to_date = datetime.now()
+        from_date = to_date - timedelta(days=30)
+
     if (to_date - from_date).days > 365:
         raise ValueError("The date range cannot exceed one year.")
 
