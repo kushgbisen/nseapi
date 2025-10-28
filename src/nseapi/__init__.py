@@ -11,6 +11,50 @@ from typing import List, Dict, Literal, Optional, Any, Tuple
 from functools import lru_cache
 import logging
 from time import sleep
+from datetime import datetime
+
+# Set up logging first (needed by rate limiter)
+logger = logging.getLogger("NSEIndia")
+logger.setLevel(logging.INFO)
+logs_dir = Path("logs")
+logs_dir.mkdir(exist_ok=True)
+if not logger.handlers:
+    handler = logging.FileHandler(logs_dir / "nseapi.log")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
+
+# Rate limiting configuration
+_rate_limit_window = 1.0  # 1 second window
+_rate_limit_max_requests = 3  # 3 requests per second
+_rate_limit_timestamps: List[float] = []
+
+def _check_rate_limit() -> None:
+    """Internal function to enforce rate limiting.
+
+    Ensures maximum 3 requests per second to prevent API abuse and blocking.
+    Uses a sliding window approach to track request timestamps.
+    """
+    global _rate_limit_timestamps
+    current_time = datetime.now().timestamp()
+
+    # Remove timestamps outside the current window
+    _rate_limit_timestamps = [
+        timestamp for timestamp in _rate_limit_timestamps
+        if current_time - timestamp < _rate_limit_window
+    ]
+
+    # If we've hit the limit, wait until the oldest request is outside the window
+    if len(_rate_limit_timestamps) >= _rate_limit_max_requests:
+        oldest_timestamp = min(_rate_limit_timestamps)
+        sleep_time = _rate_limit_window - (current_time - oldest_timestamp)
+        if sleep_time > 0:
+            logger.info(f"Rate limit reached, sleeping for {sleep_time:.2f} seconds")
+            sleep(sleep_time)
+            # Recursively call to recalculate after sleep
+            _check_rate_limit()
+
+    # Add current timestamp
+    _rate_limit_timestamps.append(current_time)
 
 # Initialize a session for all requests
 session = requests.Session()
@@ -24,18 +68,6 @@ session.headers.update(
         "Referer": "https://www.nseindia.com/get-quotes/equity?symbol=HDFCBANK",
     }
 )
-
-
-# Set up logging
-
-logger = logging.getLogger("NSEIndia")
-logger.setLevel(logging.INFO)
-logs_dir = Path("logs")
-logs_dir.mkdir(exist_ok=True)
-if not logger.handlers:
-    handler = logging.FileHandler(logs_dir / "nseapi.log")
-    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-    logger.addHandler(handler)
 
 
 # Fetch cookies required for API access
@@ -75,11 +107,14 @@ def fetch_data_from_nse(endpoint, params=None, retries=3, delay=2, timeout=10):
     for attempt in range(retries):
         try:
             logger.debug(f"Attempt {attempt + 1}: Making request to: {url}")
-            
+
+            # Apply rate limiting before making the request
+            _check_rate_limit()
+
             # Refresh cookies on first attempt or after failure
             if attempt == 0 or attempt > 0:
                 _fetch_cookies()
-            
+
             response = session.get(
                 url,
                 params=params,
